@@ -88,6 +88,38 @@
     }
   }
 
+  /* ---------- store branding / images ---------- */
+  function loadSettings() {
+    if (!DF.configured || !db) return;
+    db.from("settings").select("key,value").then(function (res) {
+      if (res.error || !res.data) return;
+      var map = {};
+      res.data.forEach(function (r) { map[r.key] = r.value; });
+      applySettings(map);
+    });
+  }
+  function applySettings(s) {
+    if (s.logo_url) {
+      var bm = el("brandMark");
+      if (bm) { bm.innerHTML = '<img src="' + esc(s.logo_url) + '" alt="Diamond Flame" />'; bm.classList.add("has-logo"); }
+    }
+    if (s.hero_headline && el("heroHeadline")) el("heroHeadline").textContent = s.hero_headline;
+    if (s.hero_subtext && el("heroSub")) el("heroSub").textContent = s.hero_subtext;
+    if (s.hero_image_url && el("heroProduct")) {
+      el("heroProduct").style.backgroundImage = "url('" + s.hero_image_url + "')";
+      el("heroProduct").classList.add("has-image");
+    }
+    if (s.banner_url && el("promoBanner")) {
+      el("promoImg").src = s.banner_url;
+      if (s.banner_link) el("promoLink").setAttribute("href", s.banner_link);
+      el("promoBanner").hidden = false;
+    }
+    Array.prototype.forEach.call(document.querySelectorAll(".collection-card[data-cat]"), function (card) {
+      var u = s["col:" + card.getAttribute("data-cat")];
+      if (u) { card.style.backgroundImage = "linear-gradient(180deg,rgba(11,13,18,.05),rgba(11,13,18,.55)),url('" + u + "')"; card.classList.add("has-img"); }
+    });
+  }
+
   function categories() {
     var seen = {}, out = ["All"];
     products.forEach(function (p) {
@@ -716,6 +748,7 @@
     if (!DF.configured) el("backendBanner").hidden = false;
 
     loadProducts();
+    loadSettings();
     refreshAuthUI();
 
     el("search").addEventListener("input", function (e) { query = e.target.value; renderGrid(); });

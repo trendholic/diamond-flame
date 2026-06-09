@@ -14,6 +14,7 @@
   var customerQuery = "";
   var customerRole = "";
   var keptImages = [];
+  var settingsMap = {}, assetUrls = {}, assetFiles = {}, brandImageKeys = [];
 
   var STATUSES = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
 
@@ -61,6 +62,112 @@
       renderStats();
       renderRequests();
       renderDealerOptions();
+      loadBranding();
+    });
+  }
+
+  /* ---------- branding / store images ---------- */
+  function loadBranding() {
+    db.from("settings").select("key,value").then(function (res) {
+      settingsMap = {};
+      (res.data || []).forEach(function (r) { settingsMap[r.key] = r.value; });
+      assetUrls = {}; assetFiles = {};
+      renderBranding();
+    });
+  }
+  function categoriesList() {
+    var seen = {}, out = [];
+    products.forEach(function (p) { if (p.category && !seen[p.category]) { seen[p.category] = 1; out.push(p.category); } });
+    return out;
+  }
+  function brandImageField(key, label) {
+    var url = (key in assetUrls) ? assetUrls[key] : (settingsMap[key] || "");
+    var pending = assetFiles[key];
+    var prev = pending ? '<img src="' + URL.createObjectURL(pending) + '" alt="" />'
+      : (url ? '<img src="' + esc(url) + '" alt="" />' : '<span class="aempty">No image</span>');
+    return '<div class="brand-field"><label>' + esc(label) + "</label>" +
+      '<div class="asset"><div class="asset-prev">' + prev + "</div>" +
+      '<div class="asset-actions"><label class="asset-up">Upload<input type="file" accept="image/*" class="asset-file" data-key="' + esc(key) + '" /></label>' +
+      ((url || pending) ? '<button type="button" class="link-btn danger asset-clear" data-key="' + esc(key) + '">Remove</button>' : "") +
+      "</div></div></div>";
+  }
+  function brandTextField(key, label, ta) {
+    var v = settingsMap[key] || "";
+    return '<div class="brand-field"><label>' + esc(label) + "</label>" +
+      (ta ? '<textarea class="brand-text" data-key="' + esc(key) + '" rows="2">' + esc(v) + "</textarea>"
+          : '<input class="brand-text" data-key="' + esc(key) + '" value="' + esc(v) + '" />') + "</div>";
+  }
+  function captureBrandTexts() {
+    Array.prototype.forEach.call(el("brandingBody").querySelectorAll(".brand-text"), function (inp) {
+      settingsMap[inp.getAttribute("data-key")] = inp.value;
+    });
+  }
+  function renderBranding() {
+    var cats = categoriesList();
+    brandImageKeys = ["logo_url", "hero_image_url", "banner_url"].concat(cats.map(function (c) { return "col:" + c; }));
+    el("brandingBody").innerHTML =
+      brandImageField("logo_url", "Logo") +
+      brandImageField("hero_image_url", "Hero image") +
+      brandTextField("hero_headline", "Hero headline") +
+      brandTextField("hero_subtext", "Hero subtext", true) +
+      brandImageField("banner_url", "Promo banner image") +
+      brandTextField("banner_link", "Promo banner link (optional, e.g. #catalogue)") +
+      '<div class="brand-sub">Collection images</div>' +
+      cats.map(function (c) { return brandImageField("col:" + c, c); }).join("");
+    var body = el("brandingBody");
+    Array.prototype.forEach.call(body.querySelectorAll(".asset-file"), function (inp) {
+      inp.addEventListener("change", function () {
+        var file = inp.files[0]; if (!file) return;
+        var key = inp.getAttribute("data-key");
+        assetFiles[key] = file;
+        var prev = inp.closest(".asset").querySelector(".asset-prev");
+        prev.innerHTML = '<img src="' + URL.createObjectURL(file) + '" alt="" />';
+      });
+    });
+    Array.prototype.forEach.call(body.querySelectorAll(".asset-clear"), function (btn) {
+      btn.addEventListener("click", function () {
+        var key = btn.getAttribute("data-key");
+        assetUrls[key] = ""; delete assetFiles[key];
+        captureBrandTexts();
+        renderBranding();
+      });
+    });
+  }
+  function uploadSiteAsset(file) {
+    var clean = file.name.replace(/[^\w.\-]+/g, "_");
+    var path = "branding/" + Date.now() + "-" + Math.random().toString(36).slice(2, 7) + "-" + clean;
+    return db.storage.from("site-assets").upload(path, file).then(function (res) {
+      if (res.error) throw res.error;
+      return db.storage.from("site-assets").getPublicUrl(path).data.publicUrl;
+    });
+  }
+  function saveBranding() {
+    captureBrandTexts();
+    var btn = el("saveBranding");
+    btn.disabled = true; btn.textContent = "Saving…";
+    var pendingKeys = Object.keys(assetFiles);
+    var uploads = pendingKeys.map(function (k) {
+      return uploadSiteAsset(assetFiles[k]).then(function (url) { assetUrls[k] = url; });
+    });
+    Promise.all(uploads).then(function () {
+      var rows = [];
+      brandImageKeys.forEach(function (k) {
+        var val = (k in assetUrls) ? assetUrls[k] : (settingsMap[k] || null);
+        rows.push({ key: k, value: val || null });
+      });
+      ["hero_headline", "hero_subtext", "banner_link"].forEach(function (k) {
+        rows.push({ key: k, value: (settingsMap[k] || "").trim() || null });
+      });
+      return db.from("settings").upsert(rows);
+    }).then(function (res) {
+      btn.disabled = false; btn.textContent = "Save branding";
+      if (res.error) { DF.toast(res.error.message, "warn"); return; }
+      assetFiles = {};
+      loadBranding();
+      DF.toast("Branding saved — refresh the storefront to see it.");
+    }).catch(function (err) {
+      btn.disabled = false; btn.textContent = "Save branding";
+      DF.toast("Save failed: " + (err && err.message ? err.message : err), "warn");
     });
   }
 
@@ -657,6 +764,7 @@
       bindVariantRowRemovers();
     });
     el("productForm").elements["images_files"].addEventListener("change", renderGallery);
+    el("saveBranding").addEventListener("click", saveBranding);
     el("pricingDealer").addEventListener("change", loadDealerPricing);
     el("savePricing").addEventListener("click", savePricing);
 
@@ -665,7 +773,7 @@
         Array.prototype.forEach.call(document.querySelectorAll(".dtab"), function (t) { t.classList.remove("active"); });
         tab.classList.add("active");
         var view = tab.getAttribute("data-view");
-        ["orders", "products", "requests", "pricing", "customers"].forEach(function (v) {
+        ["orders", "products", "requests", "pricing", "customers", "branding"].forEach(function (v) {
           el("view-" + v).hidden = v !== view;
         });
       });

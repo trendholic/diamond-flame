@@ -54,6 +54,7 @@
         <button class="dtab" data-view="requests">Dealer requests <span class="tab-badge" id="reqBadge" hidden>0</span></button>
         <button class="dtab" data-view="pricing">Dealer pricing</button>
         <button class="dtab" data-view="customers">Customers</button>
+        <button class="dtab" data-view="branding">Branding</button>
       </div>
 
       <!-- Orders -->
@@ -124,6 +125,17 @@
             </div>
           </div>
           <div class="table-wrap"><table id="customersTable"><tbody></tbody></table></div>
+        </div>
+      </div>
+
+      <!-- Branding -->
+      <div class="view" id="view-branding" hidden>
+        <div class="panel">
+          <div class="panel-head"><h3>Branding &amp; images</h3>
+            <button class="btn btn-flame sm" id="saveBranding">Save branding</button>
+          </div>
+          <p class="pricing-note">Upload your logo, hero image, a promo banner and an image for each collection. Changes appear on the storefront after saving.</p>
+          <div class="branding-body" id="brandingBody"></div>
         </div>
       </div>
     </section>

@@ -42,7 +42,7 @@
   <header class="site-header" id="top">
     <div class="container header-inner">
       <a class="brand" href="#top" aria-label="Diamond Flame home">
-        <span class="brand-mark">🔥</span>
+        <span class="brand-mark" id="brandMark">🔥</span>
         <span class="brand-text"><strong>Diamond&nbsp;Flame</strong><small>Premium Kitchen Fittings</small></span>
       </a>
       <nav class="nav" aria-label="Primary">
@@ -67,8 +67,8 @@
     <div class="container hero-inner">
       <div class="hero-copy">
         <span class="pill"><span class="pill-dot"></span> Engineered in Pakistan · Built to last</span>
-        <h1>The kitchen,<br /><span class="grad">perfected.</span></h1>
-        <p class="lead">Premium sinks, gas &amp; electric hobs and designer hoods — precision-built from food-grade steel and tempered glass, for kitchens that perform as beautifully as they look.</p>
+        <h1 id="heroHeadline">The kitchen,<br /><span class="grad">perfected.</span></h1>
+        <p class="lead" id="heroSub">Premium sinks, gas &amp; electric hobs and designer hoods — precision-built from food-grade steel and tempered glass, for kitchens that perform as beautifully as they look.</p>
         <div class="hero-cta">
           <a class="btn btn-primary magnetic" href="#catalogue">Shop the collection</a>
           <a class="btn btn-ghost magnetic" href="#collections">Explore ranges</a>
@@ -79,8 +79,8 @@
         </div>
       </div>
       <div class="hero-visual" aria-hidden="true">
-        <div class="glass-card hero-product">
-          <div class="hero-emoji">🔥</div>
+        <div class="glass-card hero-product" id="heroProduct">
+          <div class="hero-emoji" id="heroEmoji">🔥</div>
           <div class="hero-spec sp1 glass-chip">Brushed 304 steel</div>
           <div class="hero-spec sp2 glass-chip">Whisper-quiet motor</div>
           <div class="hero-spec sp3 glass-chip">Auto-ignition</div>
@@ -89,6 +89,11 @@
         <div class="orb orb-b"></div>
       </div>
     </div>
+  </section>
+
+  <!-- PROMO BANNER (shows when an image is set in Branding) -->
+  <section class="promo" id="promoBanner" hidden>
+    <a class="container promo-link" id="promoLink" href="#catalogue"><img id="promoImg" alt="Diamond Flame" /></a>
   </section>
 
   <!-- TRUST STRIP -->

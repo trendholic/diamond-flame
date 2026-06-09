@@ -434,3 +434,18 @@ body.pd-open{overflow:hidden}
   .pd-buybar .btn-primary{width:100%}
   .pd-buybar-row{padding:12px 16px}
 }
+
+/* ============ BRANDING (logo, hero image, promo, collection art) ============ */
+.brand-mark.has-logo{filter:none}
+.brand-mark.has-logo img{height:34px;width:auto;display:block;border-radius:6px}
+.hero-product.has-image{background-size:cover;background-position:center}
+.hero-product.has-image .hero-emoji{display:none}
+.hero-product.has-image .hero-spec{display:none}
+.promo{padding:8px 0 8px}
+.promo-link{display:block}
+.promo img{width:100%;height:auto;border-radius:20px;display:block;box-shadow:var(--shadow)}
+.collection-card.has-img{background-size:cover !important;background-position:center;border:none;color:#fff;min-height:220px;justify-content:flex-end}
+.collection-card.has-img h3{color:#fff}
+.collection-card.has-img p{color:rgba(255,255,255,.85)}
+.collection-card.has-img .cc-go{color:#fff}
+.collection-card.has-img .cc-emoji{filter:drop-shadow(0 4px 10px rgba(0,0,0,.4))}
