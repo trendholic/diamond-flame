@@ -1,0 +1,13 @@
+name = "diamond-flame-worker"
+main = "diamond-flame-worker.js"
+compatibility_date = "2026-01-01"
+
+[vars]
+ALLOW_ORIGIN = "*"
+# Public values are fine here (the anon key is meant to be public). Used to
+# ground the chat assistant in your live catalogue.
+SUPABASE_URL = "https://rwsfaotpdhznspueakze.supabase.co"
+SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ3c2Zhb3RwZGh6bnNwdWVha3plIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5NTcyMTksImV4cCI6MjA5NjUzMzIxOX0.92igfOS3aEhWxItKrpem0NrYd9K3fYwJLkKe9wisuL4"
+
+# ANTHROPIC_API_KEY is a SECRET — never put it here. Set it with:
+#   npx wrangler secret put ANTHROPIC_API_KEY
