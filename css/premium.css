@@ -454,3 +454,10 @@ body.pd-open{overflow:hidden}
 .collection-card.has-img p{color:rgba(255,255,255,.85)}
 .collection-card.has-img .cc-go{color:#fff}
 .collection-card.has-img .cc-emoji{filter:drop-shadow(0 4px 10px rgba(0,0,0,.4))}
+
+/* WhatsApp floating button */
+.wa-fab{position:fixed;left:22px;bottom:22px;z-index:56;width:56px;height:56px;border-radius:50%;
+  background:#25d366;display:grid;place-items:center;box-shadow:0 12px 30px rgba(37,211,102,.45);
+  transition:transform .2s,box-shadow .2s}
+.wa-fab:hover{transform:scale(1.07);box-shadow:0 16px 38px rgba(37,211,102,.55)}
+@media(max-width:720px){.wa-fab{width:52px;height:52px;left:16px;bottom:16px}}

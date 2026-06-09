@@ -62,6 +62,7 @@
         <div class="panel">
           <div class="panel-head"><h3>Orders</h3>
             <div class="head-actions">
+              <button class="ghost-btn" id="exportLedger">⭳ Ledger PDF</button>
               <button class="ghost-btn" id="exportOrders">⭳ Export CSV</button>
               <button class="ghost-btn" id="refreshOrders">Refresh</button>
             </div>
@@ -75,7 +76,10 @@
         <div class="panel">
           <div class="panel-head">
             <h3>Products</h3>
-            <button class="btn btn-flame sm" id="newProductBtn">+ Add product</button>
+            <div class="head-actions">
+              <button class="ghost-btn" id="downloadCatalogue">⭳ Catalogue PDF</button>
+              <button class="btn btn-flame sm" id="newProductBtn">+ Add product</button>
+            </div>
           </div>
           <div class="table-wrap"><table id="productsTable"><tbody></tbody></table></div>
         </div>

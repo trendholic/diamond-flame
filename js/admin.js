@@ -230,6 +230,123 @@
     });
   }
 
+  /* ---------- documents (invoice / ledger / catalogue, print-to-PDF) ---------- */
+  var COMPANY = {
+    name: "Diamond Flame", tagline: "Premium Kitchen Fittings",
+    address: "Model Town, Gujranwala, Pakistan", email: "sales@diamond-flame.com"
+  };
+  function waNumber() { return (DF.cfg && DF.cfg.WHATSAPP) ? DF.cfg.WHATSAPP : ""; }
+  function docCss() {
+    return "@page{size:A4;margin:16mm 14mm 22mm}*{box-sizing:border-box}" +
+      "body{font-family:Arial,Helvetica,sans-serif;color:#1a1d24;font-size:12px;margin:0}" +
+      ".doc-top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #2f6bff;padding-bottom:14px;margin-bottom:18px}" +
+      ".doc-brand{display:flex;gap:12px;align-items:center}.doc-logo{height:46px;width:auto}" +
+      ".doc-brand h1{font-size:20px;margin:0;color:#0b0d12}.doc-brand small{color:#697080;font-size:11px}" +
+      ".doc-meta{text-align:right;font-size:11px;color:#444}.doc-title{font-size:22px;font-weight:700;color:#2f6bff;letter-spacing:1px;margin-bottom:4px}" +
+      ".parties{display:flex;justify-content:space-between;gap:24px;margin-bottom:16px}.party h3{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#697080;margin:0 0 4px}.party p{margin:1px 0}" +
+      ".party.to{text-align:right}" +
+      "table.tbl{width:100%;border-collapse:collapse;margin-top:6px}table.tbl th{background:#0b0d12;color:#fff;text-align:left;padding:8px 10px;font-size:11px;text-transform:uppercase;letter-spacing:.5px}" +
+      "table.tbl td{padding:8px 10px;border-bottom:1px solid #e7eaf0}table.tbl tr:nth-child(even) td{background:#f7f9fc}.right{text-align:right}" +
+      ".totals{margin-top:14px;margin-left:auto;width:280px}.totals .row{display:flex;justify-content:space-between;padding:5px 0}.totals .grand{border-top:2px solid #0b0d12;margin-top:6px;padding-top:8px;font-size:16px;font-weight:700}" +
+      ".badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}.b-paid{background:#e6f7ef;color:#1f9d6b}.b-unpaid{background:#fff3e0;color:#b5790a}" +
+      ".note{margin-top:18px;font-size:11px;color:#555;border-top:1px dashed #ccc;padding-top:8px}" +
+      ".doc-foot{position:fixed;left:0;right:0;bottom:8mm;text-align:center;font-size:10px;color:#555;border-top:1px solid #e7eaf0;padding-top:5px}.doc-foot b{color:#1f9d6b}" +
+      ".cat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.cat-item{border:1px solid #e7eaf0;border-radius:8px;padding:10px;display:flex;gap:10px;page-break-inside:avoid}" +
+      ".cat-item img{width:64px;height:64px;object-fit:cover;border-radius:6px;border:1px solid #eee}.cat-emoji{width:64px;height:64px;display:grid;place-items:center;font-size:34px;background:#f4f6f9;border-radius:6px}" +
+      ".cat-item h4{margin:0 0 2px;font-size:13px}.cat-cat{color:#697080;font-size:10px;text-transform:uppercase;letter-spacing:.5px}.cat-price{font-weight:700;font-size:13px;margin-top:3px}.cat-trade{color:#2f6bff;font-size:11px}";
+  }
+  function docFooter() {
+    var wa = waNumber();
+    return '<div class="doc-foot">' + esc(COMPANY.name) + " · " + esc(COMPANY.address) +
+      (wa ? ' · WhatsApp <b>+' + esc(wa) + "</b>" : "") + " · " + esc(COMPANY.email) + "</div>";
+  }
+  function docHeader(title, rightHtml) {
+    var logo = settingsMap.logo_url
+      ? '<img class="doc-logo" src="' + esc(settingsMap.logo_url) + '" alt="" />'
+      : '<div style="font-size:34px">🔥</div>';
+    return '<div class="doc-top"><div class="doc-brand">' + logo +
+      "<div><h1>" + esc(COMPANY.name) + "</h1><small>" + esc(COMPANY.tagline) + "</small></div></div>" +
+      '<div class="doc-meta"><div class="doc-title">' + esc(title) + "</div>" + (rightHtml || "") + "</div></div>";
+  }
+  function printDoc(title, inner) {
+    var w = window.open("", "_blank");
+    if (!w) { DF.toast("Allow pop-ups to generate the document.", "warn"); return; }
+    w.document.open();
+    w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + esc(title) +
+      "</title><style>" + docCss() + "</style></head><body>" + inner + docFooter() + "</body></html>");
+    w.document.close();
+    setTimeout(function () { try { w.focus(); w.print(); } catch (e) {} }, 500);
+  }
+
+  function generateInvoice(id) {
+    var o = orders.filter(function (x) { return x.id === id; })[0];
+    if (!o) return;
+    var items = (Array.isArray(o.items) ? o.items : []).map(function (i) {
+      var line = Number(i.price || 0) * Number(i.qty || 0);
+      return "<tr><td>" + esc(i.name || "") + (i.variant ? " <small>(" + esc(i.variant) + ")</small>" : "") +
+        '</td><td class="right">' + (i.qty || 0) + '</td><td class="right">' + pkr(i.price) + '</td><td class="right">' + pkr(line) + "</td></tr>";
+    }).join("");
+    var paid = o.payment_status === "paid";
+    var right = "<div>Invoice #: <strong>" + esc(o.ref || o.id) + "</strong></div>" +
+      "<div>Date: " + esc(fmtDate(o.created_at)) + "</div>" +
+      "<div>Payment: " + (o.payment_method === "bank_transfer" ? "Bank Transfer" : "Cash on Delivery") + "</div>" +
+      '<div>Status: <span class="badge ' + (paid ? "b-paid" : "b-unpaid") + '">' + esc(o.payment_status || "unpaid") + "</span></div>";
+    var inner = docHeader("INVOICE", right) +
+      '<div class="parties"><div class="party"><h3>Billed to</h3>' +
+        "<p><strong>" + esc(o.business || o.customer_name || "") + "</strong></p>" +
+        (o.customer_name ? "<p>" + esc(o.customer_name) + "</p>" : "") +
+        (o.phone ? "<p>" + esc(o.phone) + "</p>" : "") +
+        (o.email ? "<p>" + esc(o.email) + "</p>" : "") +
+        (o.address ? "<p>" + esc(o.address) + "</p>" : "") +
+      '</div><div class="party to"><h3>From</h3><p><strong>' + esc(COMPANY.name) + "</strong></p><p>" + esc(COMPANY.address) +
+        "</p><p>" + esc(COMPANY.email) + "</p>" + (waNumber() ? "<p>WhatsApp +" + esc(waNumber()) + "</p>" : "") + "</div></div>" +
+      '<table class="tbl"><thead><tr><th>Item</th><th class="right">Qty</th><th class="right">Unit</th><th class="right">Amount</th></tr></thead><tbody>' +
+        (items || '<tr><td colspan="4">No items</td></tr>') + "</tbody></table>" +
+      '<div class="totals"><div class="row grand"><span>Total</span><span>' + pkr(o.total) + "</span></div></div>";
+    if (o.payment_method === "bank_transfer" && DF.cfg && DF.cfg.BANK) {
+      var b = DF.cfg.BANK;
+      inner += '<div class="note"><strong>Bank transfer details:</strong> ' + esc(b.bank) + " · " + esc(b.title) +
+        " · " + esc(b.account) + " · IBAN " + esc(b.iban) + (o.payment_ref ? " · Ref: " + esc(o.payment_ref) : "") + "</div>";
+    }
+    inner += '<div class="note">Thank you for your business. Questions? Message us on WhatsApp' +
+      (waNumber() ? " +" + esc(waNumber()) : "") + ".</div>";
+    printDoc("Invoice " + (o.ref || ""), inner);
+  }
+
+  function generateLedger() {
+    var rows = orders.slice().sort(function (a, b) { return new Date(a.created_at) - new Date(b.created_at); });
+    var billed = 0, paid = 0;
+    var body = rows.map(function (o) {
+      var amt = Number(o.total || 0); billed += amt; if (o.payment_status === "paid") paid += amt;
+      return "<tr><td>" + esc(fmtDate(o.created_at)) + "</td><td>" + esc(o.ref || o.id) + "</td><td>" +
+        esc(o.business || o.customer_name || "") + "</td><td>" + (o.payment_method === "bank_transfer" ? "Bank" : "COD") +
+        '</td><td class="right">' + pkr(amt) + '</td><td><span class="badge ' + (o.payment_status === "paid" ? "b-paid" : "b-unpaid") +
+        '">' + esc(o.payment_status || "unpaid") + "</span></td></tr>";
+    }).join("");
+    var inner = docHeader("LEDGER / STATEMENT", "<div>Generated: " + esc(fmtDate(new Date().toISOString())) +
+        "</div><div>Entries: " + rows.length + "</div>") +
+      '<table class="tbl"><thead><tr><th>Date</th><th>Ref</th><th>Business</th><th>Pay</th><th class="right">Amount</th><th>Status</th></tr></thead><tbody>' +
+        (body || '<tr><td colspan="6">No orders.</td></tr>') + "</tbody></table>" +
+      '<div class="totals"><div class="row"><span>Total billed</span><span>' + pkr(billed) + "</span></div>" +
+        '<div class="row"><span>Total paid</span><span>' + pkr(paid) + "</span></div>" +
+        '<div class="row grand"><span>Outstanding</span><span>' + pkr(billed - paid) + "</span></div></div>";
+    printDoc("Ledger", inner);
+  }
+
+  function generateCatalogue() {
+    var body = products.filter(function (p) { return p.active; }).map(function (p) {
+      var cover = p.image_url || (Array.isArray(p.images) && p.images[0]) || "";
+      var media = cover ? '<img src="' + esc(cover) + '" alt="" />' : '<div class="cat-emoji">' + esc(p.emoji || "🍳") + "</div>";
+      return '<div class="cat-item">' + media + '<div><div class="cat-cat">' + esc(p.category || "") + "</div><h4>" +
+        esc(p.name) + '</h4><div class="cat-price">' + pkr(p.retail_price) + '</div><div class="cat-trade">Trade: ' +
+        pkr(p.wholesale_price) + "</div></div></div>";
+    }).join("");
+    var inner = docHeader("PRODUCT CATALOGUE", "<div>" + esc(fmtDate(new Date().toISOString())) +
+        "</div><div>" + products.length + " products</div>") +
+      '<div class="cat-grid">' + (body || "No products.") + "</div>";
+    printDoc("Catalogue", inner);
+  }
+
   /* ---------- stats ---------- */
   function renderStats() {
     var revenue = orders
@@ -258,7 +375,7 @@
   function renderOrders() {
     var t = el("ordersTable").querySelector("tbody");
     if (!orders.length) { t.innerHTML = '<tr><td class="empty-cell">No orders yet.</td></tr>'; return; }
-    var head = '<tr class="thead"><th>Ref</th><th>Business</th><th>Items</th><th>Total</th><th>Payment</th><th>Date</th><th>Status</th></tr>';
+    var head = '<tr class="thead"><th>Ref</th><th>Business</th><th>Items</th><th>Total</th><th>Payment</th><th>Date</th><th>Status</th><th></th></tr>';
     var PAYSTATUS = ["unpaid", "paid", "refunded"];
     t.innerHTML = head + orders.map(function (o) {
       var itemCount = Array.isArray(o.items)
@@ -286,9 +403,13 @@
         "<td>" + esc(fmtDate(o.created_at)) + "</td>" +
         '<td><select class="status-select status-' + esc(o.status) + '" data-id="' + esc(o.id) + '">' +
           opts + "</select></td>" +
+        '<td class="actions"><button class="link-btn" data-invoice="' + esc(o.id) + '">Invoice</button></td>' +
         "</tr>";
     }).join("");
 
+    Array.prototype.forEach.call(t.querySelectorAll("[data-invoice]"), function (b) {
+      b.addEventListener("click", function () { generateInvoice(b.getAttribute("data-invoice")); });
+    });
     Array.prototype.forEach.call(t.querySelectorAll(".status-select"), function (sel) {
       sel.addEventListener("change", function () {
         var id = sel.getAttribute("data-id");
@@ -779,6 +900,8 @@
 
     el("refreshOrders").addEventListener("click", function () { loadOrders().then(renderStats); });
     el("exportOrders").addEventListener("click", exportOrdersCsv);
+    el("exportLedger").addEventListener("click", generateLedger);
+    el("downloadCatalogue").addEventListener("click", generateCatalogue);
     el("approveAll").addEventListener("click", approveAllRequests);
     el("customerSearch").addEventListener("input", function (e) { customerQuery = e.target.value; renderCustomers(); });
     el("customerRole").addEventListener("change", function (e) { customerRole = e.target.value; renderCustomers(); });
