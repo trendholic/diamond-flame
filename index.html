@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Diamond Flame — Fine Jewellery</title>
+  <meta name="description" content="Diamond Flame — handcrafted fine jewellery. Rings, necklaces, earrings and bracelets. Prices in PKR." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <header class="site-header" id="top">
+    <div class="container header-inner">
+      <a class="brand" href="#top">
+        <span class="brand-mark">◆</span>
+        <span class="brand-name">Diamond&nbsp;Flame</span>
+      </a>
+      <nav class="nav">
+        <a href="#collection">Collection</a>
+        <a href="#about">About</a>
+        <a href="#contact">Contact</a>
+      </nav>
+      <button class="cart-btn" id="cartBtn" aria-label="Open cart">
+        <span class="cart-icon">🛍</span>
+        <span class="cart-count" id="cartCount">0</span>
+      </button>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container hero-inner">
+      <p class="eyebrow">Handcrafted in Pakistan</p>
+      <h1>Where light meets fire.</h1>
+      <p class="lead">Ethically sourced diamonds and 21K gold, set by hand. Timeless pieces for the moments that matter.</p>
+      <a class="btn btn-gold" href="#collection">Shop the collection</a>
+    </div>
+  </section>
+
+  <main>
+    <section id="collection" class="collection">
+      <div class="container">
+        <div class="section-head">
+          <h2>The Collection</h2>
+          <div class="filters" id="filters"></div>
+        </div>
+        <div class="grid" id="productGrid"></div>
+      </div>
+    </section>
+
+    <section id="about" class="about">
+      <div class="container about-inner">
+        <div>
+          <h2>Crafted to last generations</h2>
+          <p>Every Diamond Flame piece is made to order in our Lahore atelier. We work only with conflict-free stones and hallmarked gold, and each item ships with a certificate of authenticity.</p>
+          <ul class="ticks">
+            <li>Conflict-free, certified diamonds</li>
+            <li>Hallmarked 18K &amp; 21K gold</li>
+            <li>Lifetime cleaning &amp; resizing</li>
+            <li>Free insured delivery across Pakistan</li>
+          </ul>
+        </div>
+        <div class="about-card">
+          <span class="big-mark">◆</span>
+          <p>“The fire of a diamond is its soul.”</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="contact" class="site-footer">
+    <div class="container footer-inner">
+      <div>
+        <span class="brand-name">Diamond Flame</span>
+        <p>Fine jewellery, handcrafted in Lahore.</p>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <p><a href="mailto:hello@diamond-flame.com">hello@diamond-flame.com</a></p>
+        <p>Mon–Sat · 11am–8pm PKT</p>
+      </div>
+      <div>
+        <h4>Visit</h4>
+        <p>MM Alam Road, Gulberg III<br />Lahore, Pakistan</p>
+      </div>
+    </div>
+    <div class="container copyright">© <span id="year"></span> Diamond Flame. All rights reserved.</div>
+  </footer>
+
+  <!-- Cart drawer -->
+  <div class="drawer-overlay" id="drawerOverlay"></div>
+  <aside class="cart-drawer" id="cartDrawer" aria-hidden="true">
+    <div class="drawer-head">
+      <h3>Your bag</h3>
+      <button class="close-btn" id="closeCart" aria-label="Close cart">✕</button>
+    </div>
+    <div class="cart-items" id="cartItems"></div>
+    <div class="cart-foot">
+      <div class="cart-total">
+        <span>Total</span>
+        <strong id="cartTotal">PKR 0</strong>
+      </div>
+      <button class="btn btn-gold full" id="checkoutBtn">Checkout</button>
+      <p class="cart-note">Free insured delivery · Cash on delivery available</p>
+    </div>
+  </aside>
+
+  <!-- Checkout modal -->
+  <div class="modal-overlay" id="checkoutOverlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="checkoutTitle">
+      <button class="close-btn modal-close" id="closeCheckout" aria-label="Close">✕</button>
+      <div id="checkoutForm">
+        <h3 id="checkoutTitle">Complete your order</h3>
+        <form id="orderForm">
+          <label>Full name<input name="name" required autocomplete="name" /></label>
+          <label>Phone<input name="phone" required autocomplete="tel" inputmode="tel" /></label>
+          <label>Email<input name="email" type="email" autocomplete="email" /></label>
+          <label>Delivery address<textarea name="address" required rows="3"></textarea></label>
+          <div class="order-summary" id="orderSummary"></div>
+          <button class="btn btn-gold full" type="submit">Place order</button>
+        </form>
+      </div>
+      <div id="checkoutDone" class="checkout-done" hidden>
+        <span class="big-mark">✓</span>
+        <h3>Order received</h3>
+        <p id="doneMsg"></p>
+        <button class="btn btn-gold" id="doneClose">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/js/products.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
