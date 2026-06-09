@@ -61,3 +61,6 @@ create policy products_admin_read on public.products
 --    update public.profiles set role = 'dealer' where email = 'dealer@example.com';
 --  You can also do this from the dashboard → Customers → role dropdown.
 -- ============================================================
+
+-- Force PostgREST to refresh its schema/function cache so new RPCs are callable immediately.
+notify pgrst, 'reload schema';

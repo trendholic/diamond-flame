@@ -261,3 +261,6 @@ where  cost_price = 0 and wholesale_price > 0;
 --  2) Then run (replace the email):
 --     update public.profiles set role = 'admin' where email = 'you@example.com';
 -- ============================================================
+
+-- Force PostgREST to refresh its schema/function cache so new RPCs are callable immediately.
+notify pgrst, 'reload schema';

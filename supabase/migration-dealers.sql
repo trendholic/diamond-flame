@@ -85,3 +85,6 @@ drop policy if exists products_public_read on public.products;
 drop policy if exists products_admin_read  on public.products;
 create policy products_admin_read on public.products
   for select using (public.is_admin());
+
+-- Force PostgREST to refresh its schema/function cache so new RPCs are callable immediately.
+notify pgrst, 'reload schema';
