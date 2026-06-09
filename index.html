@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Diamond Flame — Home Appliances Wholesale</title>
-  <meta name="description" content="Diamond Flame Home Appliances — wholesale refrigerators, ACs, washing machines, TVs and more. Bulk prices in PKR." />
+  <meta name="description" content="Diamond Flame Home Appliances — wholesale refrigerators, ACs, washing machines, TVs and more. Genuine brands, true bulk rates, delivered across Pakistan." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%94%A5%3C/text%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
@@ -32,18 +33,38 @@
   </header>
 
   <section class="hero">
+    <div class="hero-glow" aria-hidden="true"></div>
     <div class="container hero-inner">
-      <p class="eyebrow">Pakistan's wholesale appliance partner</p>
-      <h1>Stock your store at <span class="flame">flame-hot</span> bulk prices.</h1>
-      <p class="lead">Refrigerators, inverter ACs, washing machines, TVs and more — genuine brands, wholesale rates in PKR, delivered across the country.</p>
-      <div class="hero-cta">
-        <a class="btn btn-flame" href="#catalogue">Browse catalogue</a>
-        <a class="btn btn-line" href="admin.html">Dealer dashboard</a>
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="eyebrow-dot"></span> Pakistan's wholesale appliance partner</p>
+        <h1>Stock your store at <span class="flame">flame-hot</span> bulk prices.</h1>
+        <p class="lead">Refrigerators, inverter ACs, washing machines, TVs and more — genuine brands at true wholesale rates, delivered nationwide.</p>
+        <div class="hero-cta">
+          <a class="btn btn-flame" href="#catalogue">Browse catalogue</a>
+          <a class="btn btn-line" href="#why">Why dealers choose us</a>
+        </div>
+        <div class="hero-stats">
+          <div><strong id="statCount">—</strong><span>SKUs in stock</span></div>
+          <div><strong>21K+</strong><span>units delivered</span></div>
+          <div><strong>48hr</strong><span>nationwide dispatch</span></div>
+        </div>
       </div>
-      <div class="hero-stats">
-        <div><strong id="statCount">—</strong><span>SKUs in stock</span></div>
-        <div><strong>21K+</strong><span>units delivered</span></div>
-        <div><strong>48hr</strong><span>nationwide dispatch</span></div>
+      <div class="hero-art" aria-hidden="true">
+        <div class="art-tile t1"><span class="ai">🧊</span><span class="al">Refrigerators</span></div>
+        <div class="art-tile t2"><span class="ai">❄️</span><span class="al">Inverter ACs</span></div>
+        <div class="art-tile t3"><span class="ai">🌀</span><span class="al">Washing</span></div>
+        <div class="art-tile t4"><span class="ai">📺</span><span class="al">Televisions</span></div>
+        <div class="art-badge">🔥 Wholesale</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="brands" aria-label="Brands we stock">
+    <div class="container">
+      <p class="brands-label">Genuine stock from the brands you trust</p>
+      <div class="brand-row">
+        <span>Dawlance</span><span>Haier</span><span>Samsung</span><span>Gree</span>
+        <span>PEL</span><span>Orient</span><span>TCL</span><span>Kenwood</span>
       </div>
     </div>
   </section>
@@ -79,16 +100,39 @@
     </section>
   </main>
 
+  <section class="cta-band">
+    <div class="container cta-inner">
+      <div class="cta-text">
+        <h2>Become a verified dealer</h2>
+        <p>Unlock wholesale pricing, priority dispatch and flexible credit terms — approval within 24 hours.</p>
+      </div>
+      <button class="btn btn-flame" id="ctaJoin">Apply for a dealer account</button>
+    </div>
+  </section>
+
   <footer class="site-footer">
     <div class="container footer-inner">
-      <div>
+      <div class="footer-col footer-about">
         <span class="brand-text footer-brand"><strong>🔥 Diamond Flame</strong><small>Home Appliances · Wholesale</small></span>
         <p>Wholesale distribution of home &amp; kitchen appliances across Pakistan.</p>
       </div>
-      <div><h4>Contact</h4><p><a href="mailto:sales@diamond-flame.com">sales@diamond-flame.com</a></p><p>Mon–Sat · 10am–7pm PKT</p></div>
-      <div><h4>Warehouse</h4><p>Hall Road, Lahore<br />Pakistan</p></div>
+      <div class="footer-col">
+        <h4>Shop</h4>
+        <a href="#catalogue">Catalogue</a>
+        <a href="#why">Why us</a>
+        <a href="admin.html">Dealer dashboard</a>
+      </div>
+      <div class="footer-col">
+        <h4>Contact</h4>
+        <p><a href="mailto:sales@diamond-flame.com">sales@diamond-flame.com</a></p>
+        <p>Mon–Sat · 10am–7pm PKT</p>
+      </div>
+      <div class="footer-col">
+        <h4>Showroom</h4>
+        <p>Model Town,<br />Gujranwala, Pakistan</p>
+      </div>
     </div>
-    <div class="container copyright">© <span id="year"></span> Diamond Flame Home Appliances. Prices in PKR.</div>
+    <div class="container copyright">© <span id="year"></span> Diamond Flame Home Appliances. All rights reserved.</div>
   </footer>
 
   <!-- Cart / bulk order drawer -->

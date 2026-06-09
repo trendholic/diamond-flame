@@ -412,6 +412,9 @@
     el("doneClose").addEventListener("click", closeCheckout);
     el("orderForm").addEventListener("submit", submitOrder);
 
+    var ctaJoin = el("ctaJoin");
+    if (ctaJoin) ctaJoin.addEventListener("click", function () { setAuthMode("signup"); el("authOverlay").classList.add("open"); });
+
     el("closeAuth").addEventListener("click", closeAuth);
     el("loginForm").addEventListener("submit", handleLogin);
     el("signupForm").addEventListener("submit", handleSignup);
