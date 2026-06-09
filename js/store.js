@@ -125,9 +125,15 @@
     });
   }
 
+  function coverImage(p) {
+    if (p.image_url) return p.image_url;
+    if (Array.isArray(p.images) && p.images.length) return p.images[0];
+    return "";
+  }
   function mediaInner(p) {
-    return p.image_url
-      ? '<img src="' + esc(p.image_url) + '" alt="' + esc(p.name) + '" loading="lazy" />'
+    var cover = coverImage(p);
+    return cover
+      ? '<img src="' + esc(cover) + '" alt="' + esc(p.name) + '" loading="lazy" />'
       : '<span class="media-emoji">' + esc(p.emoji || "🍳") + "</span>";
   }
   function priceRowHtml(p, v) {
@@ -327,9 +333,21 @@
     var vs = variantsOf(p);
     if (!detailVariant || !variantByName(p, detailVariant)) detailVariant = vs.length ? vs[0].name : "";
     detailQty = minQty(p);
-    var media = p.image_url
-      ? '<img src="' + esc(p.image_url) + '" alt="' + esc(p.name) + '" />'
-      : '<span class="pd-emoji">' + esc(p.emoji || "🍳") + "</span>";
+    var imgs = (Array.isArray(p.images) && p.images.length) ? p.images : (p.image_url ? [p.image_url] : []);
+    var mediaCol =
+      '<div class="pd-mediacol">' +
+        '<div class="pd-media">' +
+          (imgs.length
+            ? '<img id="pdMainImg" src="' + esc(imgs[0]) + '" alt="' + esc(p.name) + '" />'
+            : '<span class="pd-emoji">' + esc(p.emoji || "🍳") + "</span>") +
+        "</div>" +
+        (imgs.length > 1
+          ? '<div class="pd-thumbs">' + imgs.map(function (u, i) {
+              return '<button type="button" class="pd-thumb' + (i === 0 ? " active" : "") +
+                '" data-img="' + esc(u) + '"><img src="' + esc(u) + '" alt="" loading="lazy" /></button>';
+            }).join("") + "</div>"
+          : "") +
+      "</div>";
     var chips = vs.length
       ? '<div class="pd-field-label">Choose option</div><div class="pd-variants">' + vs.map(function (v) {
           return '<button type="button" class="pd-vchip' + (v.name === detailVariant ? " active" : "") +
@@ -338,7 +356,7 @@
       : "";
     el("pdContent").innerHTML =
       '<div class="pd-grid">' +
-        '<div class="pd-media">' + media + "</div>" +
+        mediaCol +
         '<div class="pd-info">' +
           '<span class="pd-eyebrow">' + (p.brand ? esc(p.brand) + " · " : "") + esc(p.category) + "</span>" +
           '<h1 class="pd-name">' + esc(p.name) + "</h1>" +
@@ -369,6 +387,13 @@
         detailQty = minQty(p);
         el("pdQty").textContent = detailQty;
         updateDetailPricing();
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll(".pd-thumb"), function (b) {
+      b.addEventListener("click", function () {
+        var main = el("pdMainImg");
+        if (main) main.src = b.getAttribute("data-img");
+        Array.prototype.forEach.call(document.querySelectorAll(".pd-thumb"), function (x) { x.classList.toggle("active", x === b); });
       });
     });
     el("pdDec").addEventListener("click", function () { stepDetailQty(-1); });

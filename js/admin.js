@@ -13,6 +13,7 @@
   var requests = [];
   var customerQuery = "";
   var customerRole = "";
+  var keptImages = [];
 
   var STATUSES = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
 
@@ -245,17 +246,34 @@
       f["cost_price"].value = 0;
       f["active"].checked = true;
     }
-    showImagePreview(f["image_url"].value);
+    var existing = (p && Array.isArray(p.images) && p.images.length) ? p.images.slice()
+      : (p && p.image_url ? [p.image_url] : []);
+    keptImages = existing;
+    f["images_files"].value = "";
+    renderGallery();
     renderVariantRows(p && Array.isArray(p.variants) ? p.variants : []);
     renderMargins();
     el("productOverlay").classList.add("open");
   }
 
-  /* ---------- image preview ---------- */
-  function showImagePreview(url) {
-    var box = el("imgPreview");
-    if (url) { el("imgPreviewEl").src = url; box.hidden = false; }
-    else { el("imgPreviewEl").removeAttribute("src"); box.hidden = true; }
+  /* ---------- image gallery editor ---------- */
+  function renderGallery() {
+    var box = el("galleryEdit");
+    var pending = el("productForm").elements["images_files"].files.length;
+    var html = keptImages.map(function (u, i) {
+      return '<div class="gthumb"><img src="' + esc(u) + '" alt="" />' +
+        (i === 0 ? '<span class="gcover">Cover</span>' : "") +
+        '<button type="button" class="gdel" data-i="' + i + '" aria-label="Remove">✕</button></div>';
+    }).join("");
+    if (pending) html += '<div class="gpending">+' + pending + " new image" + (pending === 1 ? "" : "s") + " to upload</div>";
+    if (!html) html = '<p class="gempty">No images yet — upload one or more above.</p>';
+    box.innerHTML = html;
+    Array.prototype.forEach.call(box.querySelectorAll(".gdel"), function (b) {
+      b.addEventListener("click", function () {
+        keptImages.splice(parseInt(b.getAttribute("data-i"), 10), 1);
+        renderGallery();
+      });
+    });
   }
 
   /* ---------- variant editor ---------- */
@@ -331,18 +349,25 @@
     var submitBtn = e.target.querySelector('button[type="submit"]');
     submitBtn.disabled = true; submitBtn.textContent = "Saving…";
 
-    var file = f["image"].files[0];
-    var imgStep = file
-      ? (function () { submitBtn.textContent = "Uploading image…"; return uploadProductImage(file); })()
-      : Promise.resolve(f["image_url"].value || null);
+    var files = Array.prototype.slice.call(f["images_files"].files, 0, 6 - keptImages.length);
+    var imgStep;
+    if (files.length) {
+      submitBtn.textContent = "Uploading images…";
+      imgStep = Promise.all(files.map(uploadProductImage)).then(function (urls) {
+        return keptImages.concat(urls);
+      });
+    } else {
+      imgStep = Promise.resolve(keptImages.slice());
+    }
 
-    imgStep.then(function (imageUrl) {
+    imgStep.then(function (images) {
       var payload = {
         name: f["name"].value.trim(),
         brand: f["brand"].value.trim(),
         category: f["category"].value.trim(),
         description: f["description"].value.trim(),
-        image_url: imageUrl,
+        image_url: images[0] || null,
+        images: images,
         retail_price: Number(f["retail_price"].value),
         wholesale_price: Number(f["wholesale_price"].value),
         cost_price: Number(f["cost_price"].value),
@@ -608,15 +633,7 @@
       el("variantRows").insertAdjacentHTML("beforeend", variantRowHtml({}));
       bindVariantRowRemovers();
     });
-    el("productForm").elements["image"].addEventListener("change", function () {
-      var file = this.files[0];
-      if (file) { showImagePreview(URL.createObjectURL(file)); }
-    });
-    el("imgClear").addEventListener("click", function () {
-      var f = el("productForm").elements;
-      f["image"].value = ""; f["image_url"].value = "";
-      showImagePreview("");
-    });
+    el("productForm").elements["images_files"].addEventListener("change", renderGallery);
     el("pricingDealer").addEventListener("change", loadDealerPricing);
     el("savePricing").addEventListener("click", savePricing);
 

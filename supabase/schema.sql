@@ -46,6 +46,7 @@ create table if not exists public.products (
   stock           integer not null default 0,
   emoji           text default '🍳',
   image_url       text,
+  images          jsonb not null default '[]'::jsonb,
   variants        jsonb not null default '[]'::jsonb,
   active          boolean not null default true,
   created_at      timestamptz not null default now()
@@ -58,6 +59,7 @@ alter table public.products add column if not exists retail_price    numeric not
 alter table public.products add column if not exists wholesale_price numeric not null default 0;
 alter table public.products add column if not exists cost_price      numeric not null default 0;
 alter table public.products add column if not exists image_url       text;
+alter table public.products add column if not exists images          jsonb not null default '[]'::jsonb;
 alter table public.products add column if not exists variants        jsonb not null default '[]'::jsonb;
 alter table public.products add column if not exists moq             integer not null default 1;
 alter table public.products add column if not exists stock           integer not null default 0;
@@ -131,13 +133,14 @@ drop function if exists public.catalogue();
 create function public.catalogue()
 returns table (
   id uuid, name text, brand text, category text, description text,
-  emoji text, image_url text, moq integer, stock integer,
+  emoji text, image_url text, images jsonb, moq integer, stock integer,
   retail_price numeric, wholesale_price numeric, cost_price numeric,
   variants jsonb
 )
 language sql stable security definer set search_path = public
 as $$
-  select p.id, p.name, p.brand, p.category, p.description, p.emoji, p.image_url, p.moq, p.stock,
+  select p.id, p.name, p.brand, p.category, p.description, p.emoji, p.image_url,
+         coalesce(p.images, '[]'::jsonb), p.moq, p.stock,
          p.retail_price,
          case when public.viewer_role() in ('dealer','admin') then
            coalesce(

@@ -144,9 +144,9 @@
         </div>
         <label>Description<textarea name="description" rows="2"></textarea></label>
 
-        <label>Product image
-          <input name="image" type="file" accept="image/*" class="file" /></label>
-        <div class="img-preview" id="imgPreview" hidden><img id="imgPreviewEl" alt="preview" /><button type="button" class="link-btn danger" id="imgClear">Remove image</button></div>
+        <label>Product images <small>(first is the cover · up to 6)</small>
+          <input name="images_files" type="file" accept="image/*" multiple class="file" /></label>
+        <div class="gallery-edit" id="galleryEdit"></div>
 
         <label>Retail price — shown to everyone (Rs)
           <input name="retail_price" type="number" min="0" step="1" required /></label>
