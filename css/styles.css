@@ -370,6 +370,33 @@ tr.inactive{opacity:.5}
 .pill-admin{background:rgba(255,106,44,.18);color:var(--flame-2)}
 .pill-customer{background:rgba(255,255,255,.07);color:var(--muted)}
 
+/* product images + variants (storefront) */
+.card-media img{width:100%;height:100%;object-fit:cover;display:block}
+.media-emoji{font-size:62px;line-height:1}
+.variant-pick{margin:2px 0 4px}
+.variant-select{width:100%;background:#10121a;border:1px solid var(--line);color:var(--ink);
+  border-radius:10px;padding:9px 11px;font:inherit;font-size:13px;cursor:pointer}
+.variant-select:focus{outline:none;border-color:var(--flame)}
+.variant-tag{display:inline-block;font-size:11px;color:var(--flame-2);background:rgba(255,106,44,.12);
+  border-radius:20px;padding:1px 9px;margin-top:2px;width:fit-content}
+.drawer-row .thumb img{width:100%;height:100%;object-fit:cover;border-radius:10px}
+/* admin: product thumb + variant editor + image preview */
+.p-cell{display:flex;gap:10px;align-items:center}
+.p-thumb{width:42px;height:42px;border-radius:8px;overflow:hidden;border:1px solid var(--line);flex:none;
+  display:grid;place-items:center;background:#10121a}
+.p-thumb img{width:100%;height:100%;object-fit:cover}
+.p-emoji{font-size:22px}
+.img-preview{display:flex;align-items:center;gap:12px}
+.img-preview img{width:74px;height:74px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
+.variants-editor{border:1px solid var(--line);border-radius:12px;padding:14px;background:#10121a;display:grid;gap:10px}
+.ve-head{font-family:'Sora',sans-serif;font-size:13px;font-weight:600;color:var(--ink)}
+.ve-head span{color:var(--muted);font-weight:400;font-size:12px}
+.variant-row{display:grid;grid-template-columns:1.4fr 1fr 1fr .8fr auto;gap:8px;align-items:center}
+.variant-row input{background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:8px;
+  padding:8px 10px;font:inherit;font-size:13px;width:100%}
+.variant-row input:focus{outline:none;border-color:var(--flame)}
+.ghost-btn.sm{padding:7px 14px;font-size:12.5px;width:fit-content}
+
 @media(max-width:960px){
   .hero-inner{grid-template-columns:1fr;gap:36px}
   .hero-art{height:280px;max-width:420px}

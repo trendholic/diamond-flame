@@ -44,7 +44,9 @@ create table if not exists public.products (
   cost_price      numeric not null default 0,   -- PKR, landing/cost, admin only
   moq             integer not null default 1,   -- minimum order quantity
   stock           integer not null default 0,
-  emoji           text default '📦',
+  emoji           text default '🍳',
+  image_url       text,
+  variants        jsonb not null default '[]'::jsonb,
   active          boolean not null default true,
   created_at      timestamptz not null default now()
 );
@@ -55,6 +57,8 @@ alter table public.products add column if not exists description     text;
 alter table public.products add column if not exists retail_price    numeric not null default 0;
 alter table public.products add column if not exists wholesale_price numeric not null default 0;
 alter table public.products add column if not exists cost_price      numeric not null default 0;
+alter table public.products add column if not exists image_url       text;
+alter table public.products add column if not exists variants        jsonb not null default '[]'::jsonb;
 alter table public.products add column if not exists moq             integer not null default 1;
 alter table public.products add column if not exists stock           integer not null default 0;
 alter table public.products add column if not exists emoji           text default '📦';
@@ -121,16 +125,19 @@ as $$
   select coalesce((select role from public.profiles where id = auth.uid()), 'anon');
 $$;
 
--- Public catalogue API: returns only the prices the caller may see.
-create or replace function public.catalogue()
+-- Public catalogue API: returns only the prices the caller may see, plus image
+-- and variants (variant wholesale stripped for non-dealers).
+drop function if exists public.catalogue();
+create function public.catalogue()
 returns table (
   id uuid, name text, brand text, category text, description text,
-  emoji text, moq integer, stock integer,
-  retail_price numeric, wholesale_price numeric, cost_price numeric
+  emoji text, image_url text, moq integer, stock integer,
+  retail_price numeric, wholesale_price numeric, cost_price numeric,
+  variants jsonb
 )
 language sql stable security definer set search_path = public
 as $$
-  select p.id, p.name, p.brand, p.category, p.description, p.emoji, p.moq, p.stock,
+  select p.id, p.name, p.brand, p.category, p.description, p.emoji, p.image_url, p.moq, p.stock,
          p.retail_price,
          case when public.viewer_role() in ('dealer','admin') then
            coalesce(
@@ -138,7 +145,13 @@ as $$
               where dp.dealer_id = auth.uid() and dp.product_id = p.id),
              p.wholesale_price)
          end,
-         case when public.viewer_role() = 'admin' then p.cost_price end
+         case when public.viewer_role() = 'admin' then p.cost_price end,
+         case when public.viewer_role() in ('dealer','admin') then coalesce(p.variants, '[]'::jsonb)
+              else coalesce((
+                select jsonb_agg(jsonb_build_object(
+                  'name', v->>'name', 'retail_price', v->'retail_price', 'stock', v->'stock'))
+                from jsonb_array_elements(coalesce(p.variants, '[]'::jsonb)) v), '[]'::jsonb)
+         end
   from   public.products p
   where  p.active = true
   order  by p.category, p.name;
@@ -245,40 +258,57 @@ create policy dealer_docs_read on storage.objects
 create policy dealer_docs_insert on storage.objects
   for insert with check (bucket_id = 'dealer-docs');
 
+-- product images (admins upload while signed in; public read)
+insert into storage.buckets (id, name, public)
+values ('product-images', 'product-images', true)
+on conflict (id) do nothing;
+drop policy if exists product_images_read  on storage.objects;
+drop policy if exists product_images_write on storage.objects;
+create policy product_images_read on storage.objects
+  for select using (bucket_id = 'product-images');
+create policy product_images_write on storage.objects
+  for insert to authenticated with check (bucket_id = 'product-images');
+
 -- ============================================================
---  SEED CATALOGUE (realistic PKR wholesale prices)
+--  SEED CATALOGUE (Diamond Flame kitchen products, PKR)
 --  Runs only once — skipped if products already exist.
 -- ============================================================
-insert into public.products (name, brand, category, description, retail_price, wholesale_price, moq, stock, emoji)
+insert into public.products
+  (name, brand, category, description, retail_price, wholesale_price, cost_price, moq, stock, emoji, variants)
 select * from (values
-  ('Inverter Refrigerator 15 cu.ft', 'Dawlance',  'Refrigerators',    'Frost-free double-door inverter fridge, energy-efficient compressor.',            145000, 128000,  4,  60, '🧊'),
-  ('Deep Freezer 12 cu.ft',          'Haier',     'Refrigerators',    'Single-door chest freezer with fast-freeze and lock.',                            98000,  86000,   4,  45, '🧊'),
-  ('Side-by-Side Refrigerator',      'Samsung',   'Refrigerators',    'Twin-cooling side-by-side with water dispenser, 600L.',                          285000, 262000,  2,  18, '🧊'),
-  ('Inverter AC 1.5 Ton',            'Gree',      'Air Conditioners', 'DC inverter split AC, heat & cool, low-voltage start.',                          172000, 154000,  3,  50, '❄️'),
-  ('Inverter AC 1.0 Ton',            'Haier',     'Air Conditioners', 'Energy-saving 1 ton inverter, turbo cooling.',                                   138000, 123000,  3,  40, '❄️'),
-  ('Floor Standing AC 2.0 Ton',      'Orient',    'Air Conditioners', 'Cabinet inverter AC for halls and showrooms.',                                   268000, 245000,  2,  15, '❄️'),
-  ('Fully Automatic Washer 9kg',     'Dawlance',  'Washing Machines', 'Front-load automatic, 9kg, multiple wash programs.',                              92000,  81000,   4,  55, '🌀'),
-  ('Twin-Tub Washing Machine',       'PEL',       'Washing Machines', 'Semi-automatic twin tub, 10kg wash + spin.',                                      38000,  32500,   6,  80, '🌀'),
-  ('Top-Load Washer 8kg',            'Haier',     'Washing Machines', 'Fully automatic top-load with quick-wash.',                                       74000,  65000,   4,  42, '🌀'),
-  ('Microwave Oven 30L',             'Dawlance',  'Kitchen',          'Grill + convection microwave, 30 litre cavity.',                                 36000,  31000,   6,  70, '🍳'),
-  ('5-Burner Gas Stove',             'Kenwood',   'Kitchen',          'Tempered glass top auto-ignition cooking range.',                                 28000,  23500,   8, 100, '🍳'),
-  ('Electric Kettle 1.8L',           'Westpoint', 'Kitchen',          'Concealed element stainless kettle, auto cut-off.',                                4500,   3600,  20, 200, '🍳'),
-  ('Water Dispenser 3-Tap',          'Orient',    'Water',            'Hot, normal & cold dispenser with refrigerated cabinet.',                         44000,  38000,   4,  48, '🚰'),
-  ('Instant Electric Geyser 15L',    'PEL',       'Water Heating',    'Fast-heating electric storage geyser, 15 litre.',                                 26000,  22000,   6,  64, '🔥'),
-  ('Gas Geyser 35 Gallon',           'Canon',     'Water Heating',    'Dual-valve gas water heater, 35 gallon tank.',                                    31000,  26500,   5,  38, '🔥'),
-  ('LED TV 43" Full HD',             'TCL',       'Televisions',      'Slim-bezel Full HD LED panel, dual HDMI.',                                        62000,  54000,   5,  52, '📺'),
-  ('Smart LED TV 55" 4K',            'Samsung',   'Televisions',      'Crystal 4K UHD smart TV, built-in streaming.',                                   135000, 121000,  3,  24, '📺'),
-  ('Air Cooler 70L',                 'Super Asia','Cooling',          'Large-tank room air cooler with ice box.',                                        34000,  28500,   6,  90, '💨'),
-  ('Pedestal Fan 24"',               'GFC',       'Cooling',          'High-velocity pedestal fan, copper winding.',                                      9500,   7800,  12, 150, '💨'),
-  ('Ceiling Fan 56" (pack)',         'Royal',     'Cooling',          'AC ceiling fan, energy-saver — sold per single unit.',                             7200,   5900,  15, 220, '💨'),
-  ('Microwave + Air Fryer Combo',    'Haier',     'Kitchen',          'Convection microwave with air-fry basket, 25L.',                                  42000,  36000,   5,  30, '🍳')
-) as seed(name, brand, category, description, retail_price, wholesale_price, moq, stock, emoji)
+  ('Apex Kitchen Sink', 'Stainless Steel', 'Kitchen Sinks',
+   'Satin-finish 304 stainless steel sink with sound-dampening pads and basket waste.',
+   16000, 13500, 10800, 2, 65, '🪣',
+   '[{"name":"Single bowl","retail_price":16000,"wholesale_price":13500,"stock":40},{"name":"Double bowl","retail_price":26000,"wholesale_price":22000,"stock":25}]'::jsonb),
+  ('Flushline Undermount Sink', 'Stainless Steel', 'Kitchen Sinks',
+   'Sleek undermount sink, brushed finish, with overflow and waste kit.',
+   21000, 17500, 14000, 2, 38, '🪣',
+   '[{"name":"Single bowl","retail_price":21000,"wholesale_price":17500,"stock":22},{"name":"1.5 bowl","retail_price":28000,"wholesale_price":23500,"stock":16}]'::jsonb),
+  ('Ember 3-Burner Gas Hob', 'Tempered Glass', 'Gas Hobs',
+   'Built-in glass gas hob, auto-ignition, cast-iron pan supports.',
+   24000, 20000, 16000, 3, 50, '🔥',
+   '[{"name":"60 cm","retail_price":24000,"wholesale_price":20000,"stock":30},{"name":"75 cm","retail_price":29000,"wholesale_price":24000,"stock":20}]'::jsonb),
+  ('Titan 5-Burner Gas Hob', 'Stainless Steel', 'Gas Hobs',
+   'Heavy-duty 5-burner stainless hob with FFD safety and brass burners.',
+   38000, 32000, 26000, 2, 28, '🔥',
+   '[{"name":"86 cm","retail_price":38000,"wholesale_price":32000,"stock":18},{"name":"90 cm","retail_price":42000,"wholesale_price":35500,"stock":10}]'::jsonb),
+  ('Aura Built-in Electric Hob', 'Ceramic Glass', 'Electric Hobs',
+   'Frameless ceramic hob with touch controls and residual-heat indicators.',
+   34000, 28500, 23000, 2, 24, '⚡',
+   '[{"name":"2 zone","retail_price":34000,"wholesale_price":28500,"stock":14},{"name":"4 zone","retail_price":52000,"wholesale_price":44000,"stock":10}]'::jsonb),
+  ('Volt Domino Electric Hob', 'Ceramic Glass', 'Electric Hobs',
+   'Slim 2-zone domino hob, ideal for compact kitchens and islands.',
+   22000, 18000, 14500, 3, 30, '⚡', '[]'::jsonb),
+  ('Cyclone Chimney Hood', 'Stainless Steel', 'Kitchen Hoods',
+   'Auto-clean chimney hood, 1200 m³/h suction, LED lighting, touch panel.',
+   32000, 27000, 21500, 2, 26, '🌀',
+   '[{"name":"60 cm","retail_price":32000,"wholesale_price":27000,"stock":16},{"name":"90 cm","retail_price":39000,"wholesale_price":33000,"stock":10}]'::jsonb),
+  ('Slimline Curved Hood', 'Glass & Steel', 'Kitchen Hoods',
+   'Curved tempered-glass hood with whisper-quiet motor and washable filters.',
+   28000, 23000, 18500, 2, 22, '🌀',
+   '[{"name":"60 cm","retail_price":28000,"wholesale_price":23000,"stock":12},{"name":"90 cm","retail_price":34000,"wholesale_price":28500,"stock":10}]'::jsonb)
+) as seed(name, brand, category, description, retail_price, wholesale_price, cost_price, moq, stock, emoji, variants)
 where not exists (select 1 from public.products);
-
--- Seed a landing/cost price (~88% of wholesale) so margins show immediately.
-update public.products
-set    cost_price = round(wholesale_price * 0.88)
-where  cost_price = 0 and wholesale_price > 0;
 
 -- ============================================================
 --  MAKE YOURSELF ADMIN

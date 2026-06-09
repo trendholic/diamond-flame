@@ -6,7 +6,7 @@
   var db = DF.db;
   var el = DF.el, pkr = DF.pkr, esc = DF.esc;
 
-  var STORAGE_KEY = "dfha.cart.v1";
+  var STORAGE_KEY = "dfha.cart.v2"; // v2: keyed by product+variant, value {pid,variant,qty}
   var products = [];
   var cart = loadCart();
   var profile = null;
@@ -58,7 +58,20 @@
   function hasWholesale(p) {
     return p.wholesale_price !== null && p.wholesale_price !== undefined;
   }
-  function unitPrice(p) { return hasWholesale(p) ? p.wholesale_price : p.retail_price; }
+  function variantsOf(p) { return Array.isArray(p.variants) ? p.variants : []; }
+  function variantByName(p, name) {
+    var vs = variantsOf(p);
+    for (var i = 0; i < vs.length; i++) if (vs[i].name === name) return vs[i];
+    return null;
+  }
+  function retailOf(p, v) { return (v && v.retail_price != null) ? v.retail_price : p.retail_price; }
+  function wholesaleOf(p, v) { return (v && v.wholesale_price != null) ? v.wholesale_price : p.wholesale_price; }
+  // Effective unit price for the active tier (wholesale falls back to retail).
+  function unitPrice(p, v) {
+    if (hasWholesale(p)) { var w = wholesaleOf(p, v); return (w != null) ? w : retailOf(p, v); }
+    return retailOf(p, v);
+  }
+  function stockOf(p, v) { return v ? (v.stock != null ? Number(v.stock) : 0) : Number(p.stock || 0); }
   function minQty(p) { return hasWholesale(p) ? (p.moq || 1) : 1; }
 
   function updateDealerHint() {
@@ -110,68 +123,105 @@
     });
   }
 
+  function mediaInner(p) {
+    return p.image_url
+      ? '<img src="' + esc(p.image_url) + '" alt="' + esc(p.name) + '" loading="lazy" />'
+      : '<span class="media-emoji">' + esc(p.emoji || "🍳") + "</span>";
+  }
+  function priceRowHtml(p, v) {
+    var retail = retailOf(p, v);
+    if (hasWholesale(p)) {
+      var w = unitPrice(p, v);
+      var saving = retail > w ? Math.round(100 - (w / retail) * 100) : 0;
+      return '<span class="wholesale">' + pkr(w) + '<small>/unit dealer price</small></span>' +
+        (saving ? '<span class="retail">' + pkr(retail) + "</span>" : "");
+    }
+    return '<span class="wholesale">' + pkr(retail) + '<small>/unit</small></span>';
+  }
+
   function renderGrid() {
     var grid = el("productGrid");
     var list = visibleProducts();
     if (!list.length) {
-      grid.innerHTML = '<p class="loading">No appliances match your search.</p>';
+      grid.innerHTML = '<p class="loading">No products match your search.</p>';
       return;
     }
     grid.innerHTML = "";
     list.forEach(function (p) {
-      var dealer = hasWholesale(p);
-      // Savings shown to dealers = wholesale vs retail.
-      var saving = dealer && p.retail_price > p.wholesale_price
-        ? Math.round(100 - (p.wholesale_price / p.retail_price) * 100) : 0;
-      var priceBlock = dealer
-        ? '<span class="wholesale">' + pkr(p.wholesale_price) + '<small>/unit dealer price</small></span>' +
-          '<span class="retail">' + pkr(p.retail_price) + "</span>"
-        : '<span class="wholesale">' + pkr(p.retail_price) + '<small>/unit</small></span>';
+      var vs = variantsOf(p);
       var card = document.createElement("article");
       card.className = "card";
+      var variantPick = vs.length
+        ? '<div class="variant-pick"><select class="variant-select">' + vs.map(function (v) {
+            return '<option value="' + esc(v.name) + '">' + esc(v.name) + "</option>";
+          }).join("") + "</select></div>"
+        : "";
       card.innerHTML =
-        '<div class="card-media">' + esc(p.emoji || "📦") +
-          (p.stock <= 0 ? '<span class="badge out">Out of stock</span>'
-            : (saving ? '<span class="badge save">-' + saving + "%</span>" : "")) +
-        '</div>' +
+        '<div class="card-media">' + mediaInner(p) + "</div>" +
         '<div class="card-body">' +
-          '<span class="card-brand">' + esc(p.brand || "") + " · " + esc(p.category) + "</span>" +
+          '<span class="card-brand">' + (p.brand ? esc(p.brand) + " · " : "") + esc(p.category) + "</span>" +
           '<h3 class="card-name">' + esc(p.name) + "</h3>" +
           '<p class="card-desc">' + esc(p.description || "") + "</p>" +
-          '<div class="price-row">' + priceBlock + "</div>" +
+          variantPick +
+          '<div class="price-row"></div>' +
           '<div class="card-foot">' +
-            (dealer ? '<span class="moq">MOQ ' + p.moq + "</span>" : '<span class="moq">Retail</span>') +
-            '<button class="add-btn" ' + (p.stock <= 0 ? "disabled" : "") + ' data-id="' + esc(p.id) + '">' +
-              (p.stock <= 0 ? "Unavailable" : "Add to order") + "</button>" +
+            (hasWholesale(p) ? '<span class="moq">MOQ ' + p.moq + "</span>" : '<span class="moq">Retail</span>') +
+            '<button class="add-btn">Add to order</button>' +
           "</div>" +
         "</div>";
-      var btn = card.querySelector(".add-btn");
-      if (btn && p.stock > 0) btn.addEventListener("click", function () { addToCart(p.id); });
+
+      var sel = card.querySelector(".variant-select");
+      var media = card.querySelector(".card-media");
+      var priceRow = card.querySelector(".price-row");
+      var addBtn = card.querySelector(".add-btn");
+
+      function refresh() {
+        var v = sel ? variantByName(p, sel.value) : null;
+        priceRow.innerHTML = priceRowHtml(p, v);
+        var old = media.querySelector(".badge"); if (old) old.remove();
+        var st = stockOf(p, v);
+        var retail = retailOf(p, v), w = unitPrice(p, v);
+        var saving = hasWholesale(p) && retail > w ? Math.round(100 - (w / retail) * 100) : 0;
+        var badge = st <= 0 ? '<span class="badge out">Out of stock</span>'
+          : (saving ? '<span class="badge save">-' + saving + "%</span>" : "");
+        if (badge) media.insertAdjacentHTML("beforeend", badge);
+        addBtn.disabled = st <= 0;
+        addBtn.textContent = st <= 0 ? "Unavailable" : "Add to order";
+      }
+      if (sel) sel.addEventListener("change", refresh);
+      refresh();
+      addBtn.addEventListener("click", function () {
+        if (!addBtn.disabled) addToCart(p.id, sel ? sel.value : "");
+      });
       grid.appendChild(card);
     });
   }
 
-  /* ---------- cart (MOQ-aware) ---------- */
-  function addToCart(id) {
-    var p = find(id);
-    if (!p) return;
-    var cur = cart[id] || 0;
-    cart[id] = cur ? cur + 1 : minQty(p); // first add jumps to the minimum (MOQ for dealers, 1 retail)
-    saveCart();
-    updateCartUI();
-    openCart();
+  /* ---------- cart (MOQ-aware, variant-aware; keyed by product+variant) ---------- */
+  function lineKey(pid, variant) { return pid + "||" + (variant || ""); }
+  function addToCart(pid, variant) {
+    var p = find(pid); if (!p) return;
+    var v = variantByName(p, variant);
+    if (stockOf(p, v) <= 0) return;
+    var key = lineKey(pid, variant);
+    var cur = cart[key] ? cart[key].qty : 0;
+    cart[key] = { pid: pid, variant: variant || "", qty: cur ? cur + 1 : minQty(p) };
+    saveCart(); updateCartUI(); openCart();
   }
-  function setQty(id, qty) {
-    var p = find(id);
+  function setQty(key, qty) {
+    var line = cart[key]; if (!line) return;
+    var p = find(line.pid);
     var min = p ? minQty(p) : 1;
-    if (qty < min) delete cart[id]; else cart[id] = qty;
-    saveCart();
-    updateCartUI();
+    if (qty < min) delete cart[key]; else line.qty = qty;
+    saveCart(); updateCartUI();
   }
-  function cartCount() { var n = 0; for (var k in cart) n += cart[k]; return n; }
+  function cartCount() { var n = 0; for (var k in cart) n += cart[k].qty; return n; }
   function cartTotal() {
     var t = 0;
-    for (var id in cart) { var p = find(id); if (p) t += unitPrice(p) * cart[id]; }
+    for (var k in cart) {
+      var line = cart[k], p = find(line.pid);
+      if (p) t += unitPrice(p, variantByName(p, line.variant)) * line.qty;
+    }
     return t;
   }
 
@@ -179,28 +229,33 @@
     el("cartCount").textContent = cartCount();
     el("cartTotal").textContent = pkr(cartTotal());
     var box = el("cartItems");
-    var ids = Object.keys(cart);
-    if (!ids.length) { box.innerHTML = '<p class="empty">No items yet. Add appliances to build a bulk order.</p>'; return; }
+    var keys = Object.keys(cart);
+    if (!keys.length) { box.innerHTML = '<p class="empty">No items yet. Add products to build your order.</p>'; return; }
     box.innerHTML = "";
-    ids.forEach(function (id) {
-      var p = find(id);
-      if (!p) { delete cart[id]; return; }
+    keys.forEach(function (key) {
+      var line = cart[key];
+      var p = find(line.pid);
+      if (!p) { delete cart[key]; return; }
+      var v = variantByName(p, line.variant);
+      var unit = unitPrice(p, v);
+      var thumb = p.image_url ? '<img src="' + esc(p.image_url) + '" alt="" />' : esc(p.emoji || "🍳");
       var row = document.createElement("div");
       row.className = "drawer-row";
       row.innerHTML =
-        '<div class="thumb">' + esc(p.emoji || "📦") + "</div>" +
+        '<div class="thumb">' + thumb + "</div>" +
         '<div class="info">' +
           "<strong>" + esc(p.name) + "</strong>" +
-          '<span class="unit">' + pkr(unitPrice(p)) + (hasWholesale(p) ? " · MOQ " + p.moq : "") + "</span>" +
+          (line.variant ? '<span class="variant-tag">' + esc(line.variant) + "</span>" : "") +
+          '<span class="unit">' + pkr(unit) + (hasWholesale(p) ? " · MOQ " + p.moq : "") + "</span>" +
           '<div class="qty">' +
-            '<button data-act="dec">−</button><span>' + cart[id] + '</span><button data-act="inc">+</button>' +
+            '<button data-act="dec">−</button><span>' + line.qty + '</span><button data-act="inc">+</button>' +
             '<button class="remove">Remove</button>' +
           "</div>" +
         "</div>" +
-        '<div class="line-total">' + pkr(unitPrice(p) * cart[id]) + "</div>";
-      row.querySelector('[data-act="inc"]').addEventListener("click", function () { setQty(id, cart[id] + 1); });
-      row.querySelector('[data-act="dec"]').addEventListener("click", function () { setQty(id, cart[id] - 1); });
-      row.querySelector(".remove").addEventListener("click", function () { setQty(id, 0); });
+        '<div class="line-total">' + pkr(unit * line.qty) + "</div>";
+      row.querySelector('[data-act="inc"]').addEventListener("click", function () { setQty(key, line.qty + 1); });
+      row.querySelector('[data-act="dec"]').addEventListener("click", function () { setQty(key, line.qty - 1); });
+      row.querySelector(".remove").addEventListener("click", function () { setQty(key, 0); });
       box.appendChild(row);
     });
   }
@@ -248,10 +303,12 @@
 
   function renderOrderSummary() {
     var html = "";
-    for (var id in cart) {
-      var p = find(id); if (!p) continue;
-      html += '<div class="sum-row"><span>' + esc(p.name) + " × " + cart[id] +
-        "</span><span>" + pkr(unitPrice(p) * cart[id]) + "</span></div>";
+    for (var k in cart) {
+      var line = cart[k], p = find(line.pid); if (!p) continue;
+      var v = variantByName(p, line.variant);
+      var label = esc(p.name) + (line.variant ? " (" + esc(line.variant) + ")" : "");
+      html += '<div class="sum-row"><span>' + label + " × " + line.qty +
+        "</span><span>" + pkr(unitPrice(p, v) * line.qty) + "</span></div>";
     }
     html += '<div class="sum-row sum-total"><span>Total</span><span>' + pkr(cartTotal()) + "</span></div>";
     el("orderSummary").innerHTML = html;
@@ -260,11 +317,11 @@
   function submitOrder(e) {
     e.preventDefault();
     var f = e.target;
-    var items = Object.keys(cart).map(function (id) {
-      var p = find(id);
+    var items = Object.keys(cart).map(function (k) {
+      var line = cart[k], p = find(line.pid), v = variantByName(p, line.variant);
       return {
-        id: id, name: p.name, brand: p.brand, qty: cart[id],
-        price: unitPrice(p),
+        id: line.pid, name: p.name, variant: line.variant, brand: p.brand, qty: line.qty,
+        price: unitPrice(p, v),
         tier: hasWholesale(p) ? "wholesale" : "retail"
       };
     });

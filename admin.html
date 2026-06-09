@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard — Diamond Flame Home Appliances</title>
+  <title>Dashboard — Diamond Flame Kitchen</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%94%A5%3C/text%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -136,12 +136,18 @@
       <h3 id="productModalTitle">Add product</h3>
       <form id="productForm" class="auth-form">
         <input type="hidden" name="id" />
+        <input type="hidden" name="image_url" />
         <label>Name<input name="name" required /></label>
         <div class="two">
-          <label>Brand<input name="brand" /></label>
-          <label>Category<input name="category" required /></label>
+          <label>Type / material <small>(e.g. Stainless Steel)</small><input name="brand" /></label>
+          <label>Category<input name="category" required placeholder="Kitchen Sinks, Gas Hobs…" /></label>
         </div>
         <label>Description<textarea name="description" rows="2"></textarea></label>
+
+        <label>Product image
+          <input name="image" type="file" accept="image/*" class="file" /></label>
+        <div class="img-preview" id="imgPreview" hidden><img id="imgPreviewEl" alt="preview" /><button type="button" class="link-btn danger" id="imgClear">Remove image</button></div>
+
         <label>Retail price — shown to everyone (Rs)
           <input name="retail_price" type="number" min="0" step="1" required /></label>
         <div class="two">
@@ -153,11 +159,18 @@
         <div class="margins" id="marginReadout"></div>
         <div class="two">
           <label>MOQ<input name="moq" type="number" min="1" step="1" value="1" required /></label>
-          <label>Stock<input name="stock" type="number" min="0" step="1" value="0" required /></label>
+          <label>Stock <small>(base, when no variants)</small><input name="stock" type="number" min="0" step="1" value="0" required /></label>
         </div>
+
+        <div class="variants-editor">
+          <div class="ve-head">Variants <span>(optional — e.g. sizes, bowls, burners)</span></div>
+          <div id="variantRows"></div>
+          <button type="button" class="ghost-btn sm" id="addVariant">+ Add variant</button>
+        </div>
+
         <div class="two">
-          <label>Emoji<input name="emoji" maxlength="4" value="📦" /></label>
-          <label class="check">Active<input name="active" type="checkbox" checked /></label>
+          <label>Emoji <small>(fallback if no image)</small><input name="emoji" maxlength="4" value="🍳" /></label>
+          <label class="check"><input name="active" type="checkbox" checked /> <span>Active (visible in store)</span></label>
         </div>
         <button class="btn btn-flame full" type="submit">Save product</button>
       </form>

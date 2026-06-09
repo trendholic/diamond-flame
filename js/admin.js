@@ -188,9 +188,14 @@
       var cost = Number(p.cost_price || 0);
       var wm = Number(p.wholesale_price || 0) - cost;
       var wmPct = p.wholesale_price > 0 ? Math.round((wm / p.wholesale_price) * 100) : 0;
+      var nv = Array.isArray(p.variants) ? p.variants.length : 0;
+      var thumb = p.image_url
+        ? '<span class="p-thumb"><img src="' + esc(p.image_url) + '" alt="" /></span>'
+        : '<span class="p-thumb p-emoji">' + esc(p.emoji || "🍳") + "</span>";
       return "<tr" + (p.active ? "" : ' class="inactive"') + ">" +
-        "<td>" + esc(p.emoji || "📦") + " <strong>" + esc(p.name) + "</strong><br><small>" +
-          esc(p.brand || "") + " · " + esc(p.category) + " · MOQ " + p.moq + "</small></td>" +
+        '<td class="p-cell">' + thumb + "<span><strong>" + esc(p.name) + "</strong><br><small>" +
+          (p.brand ? esc(p.brand) + " · " : "") + esc(p.category) + " · MOQ " + p.moq +
+          (nv ? " · " + nv + " variant" + (nv === 1 ? "" : "s") : "") + "</small></span></td>" +
         "<td>" + pkr(p.retail_price) + "</td>" +
         "<td>" + pkr(p.wholesale_price) + "</td>" +
         '<td class="cost-cell">' + pkr(cost) + "</td>" +
@@ -222,6 +227,7 @@
     var p = id ? findProduct(id) : null;
     el("productModalTitle").textContent = p ? "Edit product" : "Add product";
     f["id"].value = p ? p.id : "";
+    f["image_url"].value = (p && p.image_url) || "";
     if (p) {
       f["name"].value = p.name || "";
       f["brand"].value = p.brand || "";
@@ -232,15 +238,62 @@
       f["cost_price"].value = p.cost_price != null ? p.cost_price : 0;
       f["moq"].value = p.moq;
       f["stock"].value = p.stock;
-      f["emoji"].value = p.emoji || "📦";
+      f["emoji"].value = p.emoji || "🍳";
       f["active"].checked = !!p.active;
     } else {
-      f["emoji"].value = "📦";
+      f["emoji"].value = "🍳";
       f["cost_price"].value = 0;
       f["active"].checked = true;
     }
+    showImagePreview(f["image_url"].value);
+    renderVariantRows(p && Array.isArray(p.variants) ? p.variants : []);
     renderMargins();
     el("productOverlay").classList.add("open");
+  }
+
+  /* ---------- image preview ---------- */
+  function showImagePreview(url) {
+    var box = el("imgPreview");
+    if (url) { el("imgPreviewEl").src = url; box.hidden = false; }
+    else { el("imgPreviewEl").removeAttribute("src"); box.hidden = true; }
+  }
+
+  /* ---------- variant editor ---------- */
+  function variantRowHtml(v) {
+    v = v || {};
+    return '<div class="variant-row">' +
+      '<input class="v-name" placeholder="Name (e.g. Double bowl)" value="' + esc(v.name || "") + '" />' +
+      '<input class="v-retail" type="number" min="0" step="1" placeholder="Retail" value="' + (v.retail_price != null ? esc(v.retail_price) : "") + '" />' +
+      '<input class="v-wholesale" type="number" min="0" step="1" placeholder="Wholesale" value="' + (v.wholesale_price != null ? esc(v.wholesale_price) : "") + '" />' +
+      '<input class="v-stock" type="number" min="0" step="1" placeholder="Stock" value="' + (v.stock != null ? esc(v.stock) : "") + '" />' +
+      '<button type="button" class="link-btn danger v-del" aria-label="Remove">✕</button>' +
+      "</div>";
+  }
+  function renderVariantRows(list) {
+    el("variantRows").innerHTML = (list || []).map(variantRowHtml).join("");
+    bindVariantRowRemovers();
+  }
+  function bindVariantRowRemovers() {
+    Array.prototype.forEach.call(el("variantRows").querySelectorAll(".v-del"), function (b) {
+      b.onclick = function () { b.parentNode.remove(); };
+    });
+  }
+  function collectVariants() {
+    var out = [];
+    Array.prototype.forEach.call(el("variantRows").querySelectorAll(".variant-row"), function (row) {
+      var name = row.querySelector(".v-name").value.trim();
+      if (!name) return; // skip unnamed rows
+      var rp = row.querySelector(".v-retail").value;
+      var wp = row.querySelector(".v-wholesale").value;
+      var st = row.querySelector(".v-stock").value;
+      out.push({
+        name: name,
+        retail_price: rp === "" ? null : Number(rp),
+        wholesale_price: wp === "" ? null : Number(wp),
+        stock: st === "" ? 0 : Math.max(0, parseInt(st, 10) || 0)
+      });
+    });
+    return out;
   }
 
   // Live profit-margin readout as the admin types prices.
@@ -261,31 +314,57 @@
         pkr(wm) + " · " + pct(ws) + "%</strong></div>";
   }
 
+  // Upload a product image to public storage; resolves to its public URL.
+  function uploadProductImage(file) {
+    var clean = file.name.replace(/[^\w.\-]+/g, "_");
+    var path = "products/" + Date.now() + "-" + Math.random().toString(36).slice(2, 7) + "-" + clean;
+    return db.storage.from("product-images").upload(path, file).then(function (res) {
+      if (res.error) throw res.error;
+      return db.storage.from("product-images").getPublicUrl(path).data.publicUrl;
+    });
+  }
+
   function saveProduct(e) {
     e.preventDefault();
     var f = e.target.elements; // use .elements: "id"/"name" collide with form properties
-    var payload = {
-      name: f["name"].value.trim(),
-      brand: f["brand"].value.trim(),
-      category: f["category"].value.trim(),
-      description: f["description"].value.trim(),
-      retail_price: Number(f["retail_price"].value),
-      wholesale_price: Number(f["wholesale_price"].value),
-      cost_price: Number(f["cost_price"].value),
-      moq: Math.max(1, parseInt(f["moq"].value, 10) || 1),
-      stock: Math.max(0, parseInt(f["stock"].value, 10) || 0),
-      emoji: f["emoji"].value.trim() || "📦",
-      active: f["active"].checked
-    };
     var id = f["id"].value;
-    var op = id
-      ? db.from("products").update(payload).eq("id", id)
-      : db.from("products").insert(payload);
-    op.then(function (res) {
+    var submitBtn = e.target.querySelector('button[type="submit"]');
+    submitBtn.disabled = true; submitBtn.textContent = "Saving…";
+
+    var file = f["image"].files[0];
+    var imgStep = file
+      ? (function () { submitBtn.textContent = "Uploading image…"; return uploadProductImage(file); })()
+      : Promise.resolve(f["image_url"].value || null);
+
+    imgStep.then(function (imageUrl) {
+      var payload = {
+        name: f["name"].value.trim(),
+        brand: f["brand"].value.trim(),
+        category: f["category"].value.trim(),
+        description: f["description"].value.trim(),
+        image_url: imageUrl,
+        retail_price: Number(f["retail_price"].value),
+        wholesale_price: Number(f["wholesale_price"].value),
+        cost_price: Number(f["cost_price"].value),
+        moq: Math.max(1, parseInt(f["moq"].value, 10) || 1),
+        stock: Math.max(0, parseInt(f["stock"].value, 10) || 0),
+        emoji: f["emoji"].value.trim() || "🍳",
+        active: f["active"].checked,
+        variants: collectVariants()
+      };
+      submitBtn.textContent = "Saving…";
+      return id
+        ? db.from("products").update(payload).eq("id", id)
+        : db.from("products").insert(payload);
+    }).then(function (res) {
+      submitBtn.disabled = false; submitBtn.textContent = "Save product";
       if (res.error) { DF.toast(res.error.message, "warn"); return; }
       el("productOverlay").classList.remove("open");
       DF.toast(id ? "Product updated." : "Product added.");
       loadProducts().then(renderStats);
+    }).catch(function (err) {
+      submitBtn.disabled = false; submitBtn.textContent = "Save product";
+      DF.toast("Save failed: " + (err && err.message ? err.message : err), "warn");
     });
   }
 
@@ -525,6 +604,19 @@
     el("closeProduct").addEventListener("click", function () { el("productOverlay").classList.remove("open"); });
     el("productForm").addEventListener("submit", saveProduct);
     el("productForm").addEventListener("input", renderMargins);
+    el("addVariant").addEventListener("click", function () {
+      el("variantRows").insertAdjacentHTML("beforeend", variantRowHtml({}));
+      bindVariantRowRemovers();
+    });
+    el("productForm").elements["image"].addEventListener("change", function () {
+      var file = this.files[0];
+      if (file) { showImagePreview(URL.createObjectURL(file)); }
+    });
+    el("imgClear").addEventListener("click", function () {
+      var f = el("productForm").elements;
+      f["image"].value = ""; f["image_url"].value = "";
+      showImagePreview("");
+    });
     el("pricingDealer").addEventListener("change", loadDealerPricing);
     el("savePricing").addEventListener("click", savePricing);
 
