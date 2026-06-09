@@ -307,28 +307,73 @@
       });
   }
 
+  // Upload a dealer document to public storage and return its public URL.
+  function uploadDealerFile(file, folder) {
+    var clean = file.name.replace(/[^\w.\-]+/g, "_");
+    var path = folder + "/" + Date.now() + "-" + Math.random().toString(36).slice(2, 7) + "-" + clean;
+    return db.storage.from("dealer-docs").upload(path, file).then(function (res) {
+      if (res.error) throw res.error;
+      return db.storage.from("dealer-docs").getPublicUrl(path).data.publicUrl;
+    });
+  }
+
   function handleSignup(e) {
     e.preventDefault();
     var f = e.target;
     var applyingDealer = f.dealer_apply.checked;
-    db.auth.signUp({
-      email: f.email.value.trim(),
-      password: f.password.value,
-      options: { data: {
+    var submitBtn = f.querySelector('button[type="submit"]');
+    submitBtn.disabled = true; submitBtn.textContent = "Creating…";
+
+    // If applying as a dealer, upload the shop card + photos first, then sign up
+    // with the URLs in metadata (so the signup trigger records them even before
+    // email confirmation grants a session).
+    var prep;
+    if (applyingDealer) {
+      submitBtn.textContent = "Uploading documents…";
+      var folder = "signup/" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
+      var cardFile = f.shop_card.files[0];
+      var photoFiles = Array.prototype.slice.call(f.shop_photos.files, 0, 3);
+      var jobs = [];
+      if (cardFile) jobs.push(uploadDealerFile(cardFile, folder));
+      photoFiles.forEach(function (pf) { jobs.push(uploadDealerFile(pf, folder)); });
+      prep = Promise.all(jobs).then(function (urls) {
+        var i = 0, cardUrl = "", photos = [];
+        if (cardFile) cardUrl = urls[i++];
+        for (; i < urls.length; i++) photos.push(urls[i]);
+        return { whatsapp: f.whatsapp.value.trim(), shop_card_url: cardUrl, shop_photos: photos };
+      });
+    } else {
+      prep = Promise.resolve(null);
+    }
+
+    prep.then(function (dealerData) {
+      var data = {
         full_name: f.full_name.value.trim(),
         business: f.business.value.trim(),
         phone: f.phone.value.trim(),
         dealer_apply: applyingDealer ? "true" : "false"
-      } }
+      };
+      if (dealerData) {
+        data.whatsapp = dealerData.whatsapp;
+        data.shop_card_url = dealerData.shop_card_url;
+        data.shop_photos = dealerData.shop_photos;
+      }
+      submitBtn.textContent = "Creating account…";
+      return db.auth.signUp({ email: f.email.value.trim(), password: f.password.value, options: { data: data } });
     }).then(function (res) {
+      submitBtn.disabled = false; submitBtn.textContent = "Create account";
       if (res.error) { DF.toast(res.error.message, "warn"); return; }
       f.reset();
+      el("dealerFields").hidden = true;
       closeAuth();
       var dealerMsg = applyingDealer
         ? " Your dealer application is pending — you'll see wholesale prices once an admin approves it."
         : "";
       if (res.data.session) { refreshAuthUI(); loadProducts(); DF.toast("Account created." + dealerMsg); }
       else { DF.toast("Account created — check your email to confirm, then sign in." + dealerMsg); }
+    }).catch(function (err) {
+      submitBtn.disabled = false; submitBtn.textContent = "Create account";
+      DF.toast("Sign-up failed: " + (err && err.message ? err.message : err), "warn");
     });
   }
 
@@ -359,7 +404,18 @@
         var isLogin = tab.getAttribute("data-tab") === "login";
         el("loginForm").hidden = !isLogin;
         el("signupForm").hidden = isLogin;
+        el("authTitle").textContent = isLogin ? "Welcome back" : "Create your account";
+        el("authSub").textContent = isLogin
+          ? "Sign in to see your pricing and track your orders."
+          : "Set up your shop account — apply as a dealer for wholesale rates.";
       });
+    });
+
+    // Reveal dealer verification fields only when applying as a dealer.
+    el("dealerApply").addEventListener("change", function () {
+      el("dealerFields").hidden = !this.checked;
+      var wa = el("signupForm").elements["whatsapp"];
+      if (wa) wa.required = this.checked;
     });
 
     document.querySelectorAll(".modal-overlay").forEach(function (ov) {

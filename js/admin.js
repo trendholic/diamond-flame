@@ -302,15 +302,32 @@
   }
 
   /* ---------- dealer requests ---------- */
+  function docThumb(url, title) {
+    return '<a class="thumb-link" href="' + esc(url) + '" target="_blank" rel="noopener" title="' +
+      esc(title) + '"><img src="' + esc(url) + '" alt="' + esc(title) + '" loading="lazy" /></a>';
+  }
+  function verificationCell(c) {
+    var parts = [];
+    if (c.whatsapp) parts.push('<div class="doc-wa">📱 ' + esc(c.whatsapp) + "</div>");
+    var thumbs = "";
+    if (c.shop_card_url) thumbs += docThumb(c.shop_card_url, "Shop card");
+    (Array.isArray(c.shop_photos) ? c.shop_photos : []).forEach(function (u, i) {
+      thumbs += docThumb(u, "Shop photo " + (i + 1));
+    });
+    if (thumbs) parts.push('<div class="doc-thumbs">' + thumbs + "</div>");
+    return parts.length ? parts.join("") : '<small class="muted">No documents</small>';
+  }
+
   function renderRequests() {
     var t = el("requestsTable").querySelector("tbody");
     if (!requests.length) { t.innerHTML = '<tr><td class="empty-cell">No pending dealer applications.</td></tr>'; return; }
-    var head = '<tr class="thead"><th>Business</th><th>Applicant</th><th>Contact</th><th>Applied</th><th></th></tr>';
+    var head = '<tr class="thead"><th>Business</th><th>Applicant</th><th>Contact</th><th>Verification</th><th>Applied</th><th></th></tr>';
     t.innerHTML = head + requests.map(function (c) {
       return "<tr>" +
         "<td><strong>" + esc(c.business || "—") + "</strong></td>" +
         "<td>" + esc(c.full_name || "—") + "</td>" +
         "<td>" + esc(c.email || "") + "<br><small>" + esc(c.phone || "") + "</small></td>" +
+        '<td class="verify-cell">' + verificationCell(c) + "</td>" +
         "<td>" + esc(fmtDate(c.created_at)) + "</td>" +
         '<td class="actions">' +
           '<button class="btn btn-flame sm" data-approve="' + esc(c.id) + '">Approve</button> ' +

@@ -11,6 +11,9 @@ create table if not exists public.profiles (
   full_name   text,
   business    text,            -- wholesale business / shop name
   phone       text,
+  whatsapp      text,
+  shop_card_url text,
+  shop_photos   jsonb not null default '[]'::jsonb,
   role          text not null default 'customer',  -- 'customer' | 'dealer' | 'admin'
   dealer_status text not null default 'none',       -- none | pending | approved | rejected
   created_at    timestamptz not null default now()
@@ -22,6 +25,9 @@ alter table public.profiles add column if not exists email         text;
 alter table public.profiles add column if not exists full_name     text;
 alter table public.profiles add column if not exists business      text;
 alter table public.profiles add column if not exists phone         text;
+alter table public.profiles add column if not exists whatsapp      text;
+alter table public.profiles add column if not exists shop_card_url text;
+alter table public.profiles add column if not exists shop_photos   jsonb not null default '[]'::jsonb;
 alter table public.profiles add column if not exists role          text not null default 'customer';
 alter table public.profiles add column if not exists dealer_status text not null default 'none';
 alter table public.profiles add column if not exists created_at    timestamptz not null default now();
@@ -149,13 +155,18 @@ security definer
 set search_path = public
 as $$
 begin
-  insert into public.profiles (id, email, full_name, business, phone, dealer_status)
+  insert into public.profiles (
+    id, email, full_name, business, phone, whatsapp,
+    shop_card_url, shop_photos, dealer_status)
   values (
     new.id,
     new.email,
     coalesce(new.raw_user_meta_data->>'full_name', ''),
     coalesce(new.raw_user_meta_data->>'business', ''),
     coalesce(new.raw_user_meta_data->>'phone', ''),
+    coalesce(new.raw_user_meta_data->>'whatsapp', ''),
+    coalesce(new.raw_user_meta_data->>'shop_card_url', ''),
+    coalesce(new.raw_user_meta_data->'shop_photos', '[]'::jsonb),
     case when coalesce(new.raw_user_meta_data->>'dealer_apply', '') = 'true'
          then 'pending' else 'none' end
   )
@@ -219,6 +230,20 @@ create policy dealer_prices_own on public.dealer_prices
   for select using (auth.uid() = dealer_id);
 create policy dealer_prices_admin on public.dealer_prices
   for all using (public.is_admin()) with check (public.is_admin());
+
+-- ============================================================
+--  STORAGE — dealer documents (shop card + shop photos)
+-- ============================================================
+insert into storage.buckets (id, name, public)
+values ('dealer-docs', 'dealer-docs', true)
+on conflict (id) do nothing;
+
+drop policy if exists dealer_docs_read   on storage.objects;
+drop policy if exists dealer_docs_insert on storage.objects;
+create policy dealer_docs_read on storage.objects
+  for select using (bucket_id = 'dealer-docs');
+create policy dealer_docs_insert on storage.objects
+  for insert with check (bucket_id = 'dealer-docs');
 
 -- ============================================================
 --  SEED CATALOGUE (realistic PKR wholesale prices)

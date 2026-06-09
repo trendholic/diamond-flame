@@ -112,8 +112,8 @@
       <button class="x modal-x" id="closeAuth" aria-label="Close">✕</button>
       <div class="auth-head">
         <span class="auth-mark">🔥</span>
-        <h3>Welcome to Diamond Flame</h3>
-        <p class="auth-sub">Sign in, or create a dealer account for wholesale pricing.</p>
+        <h3 id="authTitle">Welcome back</h3>
+        <p class="auth-sub" id="authSub">Sign in to see your pricing and track your orders.</p>
       </div>
       <div class="seg" role="tablist">
         <button class="tab active" data-tab="login">Sign in</button>
@@ -132,7 +132,18 @@
         </div>
         <label>Email<input name="email" type="email" required autocomplete="email" /></label>
         <label>Password<input name="password" type="password" required minlength="6" autocomplete="new-password" /></label>
-        <label class="check"><input name="dealer_apply" type="checkbox" /> <span>Apply for a dealer account — wholesale pricing, admin-approved</span></label>
+        <label class="check"><input name="dealer_apply" id="dealerApply" type="checkbox" /> <span>Apply for a dealer account — wholesale pricing, admin-approved</span></label>
+
+        <div class="dealer-fields" id="dealerFields" hidden>
+          <div class="dealer-fields-head">Dealer verification <span>for wholesale approval</span></div>
+          <label>WhatsApp number<input name="whatsapp" inputmode="tel" placeholder="+92 3xx xxxxxxx" /></label>
+          <label>Shop card <small>(visiting / registration card)</small>
+            <input name="shop_card" type="file" accept="image/*" class="file" /></label>
+          <label>Shop photos <small>(up to 3)</small>
+            <input name="shop_photos" type="file" accept="image/*" multiple class="file" /></label>
+          <p class="dealer-note">An admin reviews these before approving wholesale access.</p>
+        </div>
+
         <button class="btn btn-flame full" type="submit">Create account</button>
       </form>
     </div>
