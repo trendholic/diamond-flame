@@ -12,6 +12,7 @@
   var profile = null;
   var activeCat = "All";
   var query = "";
+  var detailProduct = null, detailVariant = "", detailQty = 1;
 
   function loadCart() {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
@@ -46,6 +47,7 @@
       renderGrid();
       updateCartUI();
       updateDealerHint();
+      handleRoute(); // open detail if the URL points at a product
     });
   }
 
@@ -195,8 +197,15 @@
       }
       if (sel) sel.addEventListener("change", refresh);
       refresh();
-      addBtn.addEventListener("click", function () {
+      addBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
         if (!addBtn.disabled) addToCart(p.id, sel ? sel.value : "");
+      });
+      // Click the card (anywhere but the controls) to open the detail view.
+      card.style.cursor = "pointer";
+      card.addEventListener("click", function (e) {
+        if (e.target.closest(".add-btn") || e.target.closest(".variant-select")) return;
+        openDetail(p, sel ? sel.value : "");
       });
       grid.appendChild(card);
     });
@@ -263,6 +272,190 @@
       row.querySelector(".remove").addEventListener("click", function () { setQty(key, 0); });
       box.appendChild(row);
     });
+  }
+
+  /* ---------- product detail (hash-routed) ---------- */
+  function addToCartQty(pid, variant, qty) {
+    var p = find(pid); if (!p) return;
+    var v = variantByName(p, variant);
+    if (stockOf(p, v) <= 0) return;
+    var key = lineKey(pid, variant);
+    cart[key] = { pid: pid, variant: variant || "", qty: Math.max(minQty(p), qty || minQty(p)) };
+    saveCart(); updateCartUI();
+    DF.toast("Added to your order.");
+    openCart();
+  }
+
+  function detailsBlock(title, body, open) {
+    return '<details class="pd-acc"' + (open ? " open" : "") + "><summary>" + esc(title) +
+      '</summary><div class="pd-acc-body">' + body + "</div></details>";
+  }
+  function specsHtml(p) {
+    var vs = variantsOf(p);
+    var rows = [
+      ["Category", p.category],
+      ["Material / type", p.brand || "—"],
+      ["Options", vs.length ? vs.map(function (v) { return v.name; }).join(", ") : "Single option"],
+      ["Minimum order (dealers)", String(p.moq)],
+      ["Warranty", "10 years (finish)"]
+    ];
+    return '<table class="pd-spectable">' + rows.map(function (r) {
+      return "<tr><th>" + esc(r[0]) + "</th><td>" + esc(r[1] == null ? "—" : r[1]) + "</td></tr>";
+    }).join("") + "</table>";
+  }
+  function faqHtml() {
+    return '<div class="pd-faq">' +
+      "<p><strong>Is delivery available nationwide?</strong><br>Yes — insured delivery to all major cities within 48 hours of confirmation.</p>" +
+      "<p><strong>Can I pay on delivery?</strong><br>Cash on delivery is available; approved dealers can request credit terms.</p>" +
+      "<p><strong>Do you offer installation?</strong><br>We provide fitting guidance and can arrange professional installation on request.</p>" +
+      "</div>";
+  }
+  function reviewsHtml() {
+    var data = [
+      ["AK", "Ayesha K. · Lahore", "Built like a tank and looks stunning. Fitting was effortless."],
+      ["MR", "Mizan R. · Gujranwala", "Powerful burners and the glass wipes perfectly clean."],
+      ["SF", "Sana F. · Islamabad", "Whisper quiet yet clears smoke instantly. Premium quality."]
+    ];
+    return '<h3 class="pd-rev-title">Customer reviews</h3><div class="pd-rev-grid">' + data.map(function (d) {
+      return '<figure class="review-card glass-card"><div class="stars">★★★★★</div><blockquote>“' +
+        esc(d[2]) + '”</blockquote><figcaption><span class="avatar">' + esc(d[0]) + "</span> " + esc(d[1]) + "</figcaption></figure>";
+    }).join("") + "</div>";
+  }
+
+  function renderDetail(p) {
+    detailProduct = p;
+    var vs = variantsOf(p);
+    if (!detailVariant || !variantByName(p, detailVariant)) detailVariant = vs.length ? vs[0].name : "";
+    detailQty = minQty(p);
+    var media = p.image_url
+      ? '<img src="' + esc(p.image_url) + '" alt="' + esc(p.name) + '" />'
+      : '<span class="pd-emoji">' + esc(p.emoji || "🍳") + "</span>";
+    var chips = vs.length
+      ? '<div class="pd-field-label">Choose option</div><div class="pd-variants">' + vs.map(function (v) {
+          return '<button type="button" class="pd-vchip' + (v.name === detailVariant ? " active" : "") +
+            '" data-v="' + esc(v.name) + '">' + esc(v.name) + "</button>";
+        }).join("") + "</div>"
+      : "";
+    el("pdContent").innerHTML =
+      '<div class="pd-grid">' +
+        '<div class="pd-media">' + media + "</div>" +
+        '<div class="pd-info">' +
+          '<span class="pd-eyebrow">' + (p.brand ? esc(p.brand) + " · " : "") + esc(p.category) + "</span>" +
+          '<h1 class="pd-name">' + esc(p.name) + "</h1>" +
+          '<div class="pd-rating"><span class="stars">★★★★★</span> <span>Trusted by 1,200+ kitchens</span></div>' +
+          '<div class="pd-price" id="pdPrice"></div>' +
+          '<p class="pd-desc">' + esc(p.description || "") + "</p>" +
+          chips +
+          '<div class="pd-buy">' +
+            '<div class="pd-qty"><button type="button" id="pdDec" aria-label="Decrease">−</button>' +
+              '<span id="pdQty">' + detailQty + '</span><button type="button" id="pdInc" aria-label="Increase">+</button></div>' +
+            '<button class="btn btn-primary" id="pdAdd">Add to order</button>' +
+          "</div>" +
+          '<div class="pd-assure"><span>🚚 48h dispatch</span><span>🛡️ 10-yr warranty</span><span>🔒 Secure order</span></div>' +
+        "</div>" +
+      "</div>" +
+      '<div class="pd-sections">' +
+        detailsBlock("Specifications", specsHtml(p), true) +
+        detailsBlock("Warranty &amp; care", "<p>Backed by a 10-year finish warranty against manufacturing defects. Clean with a soft cloth and mild detergent; avoid abrasive pads and harsh chemicals.</p>") +
+        detailsBlock("Installation", "<p>Professional fitting is recommended. Standard cut-out dimensions are provided, and our team offers installation guidance on request.</p>") +
+        detailsBlock("FAQ", faqHtml()) +
+      "</div>" +
+      '<div class="pd-reviews">' + reviewsHtml() + "</div>";
+
+    Array.prototype.forEach.call(document.querySelectorAll(".pd-vchip"), function (b) {
+      b.addEventListener("click", function () {
+        detailVariant = b.getAttribute("data-v");
+        Array.prototype.forEach.call(document.querySelectorAll(".pd-vchip"), function (x) { x.classList.toggle("active", x === b); });
+        detailQty = minQty(p);
+        el("pdQty").textContent = detailQty;
+        updateDetailPricing();
+      });
+    });
+    el("pdDec").addEventListener("click", function () { stepDetailQty(-1); });
+    el("pdInc").addEventListener("click", function () { stepDetailQty(1); });
+    el("pdAdd").addEventListener("click", function () { addToCartQty(p.id, detailVariant, detailQty); });
+    updateDetailPricing();
+  }
+
+  function stepDetailQty(d) {
+    var p = detailProduct; if (!p) return;
+    var v = variantByName(p, detailVariant);
+    var min = minQty(p), max = stockOf(p, v);
+    detailQty = Math.max(min, detailQty + d);
+    if (max > 0) detailQty = Math.min(detailQty, max);
+    el("pdQty").textContent = detailQty;
+    updateDetailPricing();
+  }
+
+  function updateDetailPricing() {
+    var p = detailProduct; if (!p) return;
+    var v = variantByName(p, detailVariant);
+    var retail = retailOf(p, v), w = unitPrice(p, v), st = stockOf(p, v);
+    var dealer = hasWholesale(p);
+    var saving = dealer && retail > w ? Math.round(100 - (w / retail) * 100) : 0;
+    var priceHtml = dealer
+      ? '<span class="pd-now">' + pkr(w) + '</span><span class="pd-was">' + pkr(retail) + "</span>" +
+        (saving ? '<span class="pd-save">Save ' + saving + "%</span>" : "") + "<small>dealer price / unit</small>"
+      : '<span class="pd-now">' + pkr(retail) + "</span><small>/ unit</small>";
+    var stockHtml = st <= 0 ? '<span class="pd-stock out">Out of stock</span>'
+      : (st <= 5 ? '<span class="pd-stock low">Only ' + st + " left</span>" : '<span class="pd-stock ok">In stock</span>');
+    el("pdPrice").innerHTML = priceHtml + " " + stockHtml;
+    var add = el("pdAdd");
+    if (add) { add.disabled = st <= 0; add.textContent = st <= 0 ? "Out of stock" : "Add to order — " + pkr(w * detailQty); }
+
+    var bar = el("pdBuyBar");
+    bar.hidden = false;
+    bar.innerHTML =
+      '<div class="container pd-buybar-row">' +
+        '<div class="pd-bb-info"><strong>' + esc(p.name) + "</strong>" + (detailVariant ? " · " + esc(detailVariant) : "") +
+          "<span>" + pkr(w) + " / unit</span></div>" +
+        '<button class="btn btn-primary" id="pdBuyAdd"' + (st <= 0 ? " disabled" : "") + ">" +
+          (st <= 0 ? "Out of stock" : "Add " + detailQty + " to order") + "</button>" +
+      "</div>";
+    var bb = el("pdBuyAdd");
+    if (bb) bb.addEventListener("click", function () { addToCartQty(p.id, detailVariant, detailQty); });
+    injectProductSchema(p, w);
+  }
+
+  function injectProductSchema(p, price) {
+    var data = {
+      "@context": "https://schema.org", "@type": "Product",
+      name: p.name, description: p.description || "", category: p.category,
+      brand: { "@type": "Brand", name: "Diamond Flame" },
+      offers: {
+        "@type": "Offer", priceCurrency: "PKR", price: Number(price || p.retail_price || 0),
+        availability: Number(p.stock || 0) > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
+      }
+    };
+    if (p.image_url) data.image = p.image_url;
+    var s = el("pdSchema"); if (s) s.textContent = JSON.stringify(data);
+  }
+
+  function showDetail(p) {
+    renderDetail(p);
+    el("productDetail").hidden = false;
+    document.body.classList.add("pd-open");
+    window.scrollTo(0, 0);
+  }
+  function hideDetail() {
+    el("productDetail").hidden = true;
+    el("pdBuyBar").hidden = true;
+    document.body.classList.remove("pd-open");
+    var s = el("pdSchema"); if (s) s.textContent = "";
+    detailProduct = null;
+  }
+  function openDetail(p, variant) {
+    detailVariant = variant || "";
+    if (location.hash !== "#/p/" + p.id) history.pushState(null, "", "#/p/" + encodeURIComponent(p.id));
+    showDetail(p);
+  }
+  function handleRoute() {
+    var m = location.hash.match(/^#\/p\/(.+)$/);
+    if (m) {
+      var p = find(decodeURIComponent(m[1]));
+      if (p) { detailVariant = ""; showDetail(p); return; }
+    }
+    if (!el("productDetail").hidden) hideDetail();
   }
 
   /* ---------- drawers & modals ---------- */
@@ -498,8 +691,16 @@
     document.querySelectorAll(".modal-overlay").forEach(function (ov) {
       ov.addEventListener("click", function (e) { if (e.target === ov) ov.classList.remove("open"); });
     });
+
+    // product detail: close button (uses history so Back works), and routing
+    el("pdClose").addEventListener("click", function () {
+      if (/^#\/p\//.test(location.hash)) history.back(); else hideDetail();
+    });
+    window.addEventListener("popstate", handleRoute);
+
     document.addEventListener("keydown", function (e) {
       if (e.key === "Escape") {
+        if (!el("productDetail").hidden) { el("pdClose").click(); return; }
         closeCart(); closeAuth(); closeCheckout();
       }
     });

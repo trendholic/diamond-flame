@@ -329,6 +329,19 @@
     </div>
   </div>
 
+  <script type="application/ld+json" id="pdSchema"></script>
+
+  <!-- Product detail -->
+  <div class="pd-overlay" id="productDetail" role="dialog" aria-modal="true" aria-label="Product details" hidden>
+    <div class="pd-scroll">
+      <div class="container pd-topbar">
+        <button class="pd-back" id="pdClose" aria-label="Back to shop">← Back to shop</button>
+      </div>
+      <div class="container pd-content" id="pdContent"></div>
+    </div>
+    <div class="pd-buybar" id="pdBuyBar" hidden></div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="js/config.js" defer></script>
   <script src="js/core.js" defer></script>
