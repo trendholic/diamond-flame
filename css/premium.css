@@ -307,6 +307,20 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:.88em}
 .sum-row{display:flex;justify-content:space-between;padding:4px 0}
 .sum-total{color:var(--ink);font-weight:700;border-top:1px solid var(--silver);margin-top:7px;padding-top:9px}
 .trust-line{text-align:center;color:var(--muted);font-size:12px;margin:4px 0 0}
+.pay-label{font-size:13px;font-weight:600;color:var(--muted);margin-top:4px}
+.pay-methods{display:grid;gap:10px}
+.pay-opt{display:flex;align-items:flex-start;gap:11px;border:1.5px solid var(--silver);border-radius:12px;padding:13px 15px;cursor:pointer;transition:border-color .2s,background .2s}
+.pay-opt:hover{border-color:var(--ink)}
+.pay-opt input{margin-top:3px;accent-color:var(--accent)}
+.pay-opt:has(input:checked){border-color:var(--accent);background:rgba(47,107,255,.05)}
+.pay-opt span{display:flex;flex-direction:column;line-height:1.3}
+.pay-opt strong{font-size:14.5px;color:var(--ink)}
+.pay-opt small{color:var(--muted);font-size:12.5px}
+.bank-box{display:grid;gap:13px;border:1px solid rgba(47,107,255,.25);border-radius:12px;padding:16px;background:rgba(47,107,255,.04)}
+.bank-details{display:grid;gap:6px}
+.bank-row{display:flex;justify-content:space-between;font-size:13.5px}
+.bank-row span{color:var(--muted)}
+.bank-row strong{color:var(--ink);font-weight:600}
 .done{text-align:center;padding:14px 0}
 .done-mark{display:inline-grid;place-items:center;width:62px;height:62px;border-radius:50%;font-size:30px;background:rgba(31,157,107,.12);color:#1f9d6b;margin-bottom:14px}
 .done p{color:var(--muted);margin:8px 0 22px}

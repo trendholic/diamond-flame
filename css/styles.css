@@ -361,6 +361,12 @@ tr.inactive{opacity:.5}
 .link-btn.danger{color:var(--ember)}
 .status-select{background:var(--panel-2);border:1px solid var(--line);color:var(--ink);border-radius:8px;
   padding:6px 10px;font:inherit;font-size:13px;cursor:pointer;text-transform:capitalize}
+.pay-cell small{display:block}
+.pay-line{display:flex;align-items:center;gap:8px;margin-top:6px}
+.pay-select{background:var(--panel-2);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:6px 10px;font:inherit;font-size:12px;cursor:pointer;text-transform:capitalize}
+.pay-unpaid{border-color:rgba(255,157,60,.5)}
+.pay-paid{border-color:rgba(54,201,143,.55)}
+.pay-refunded{border-color:rgba(255,61,87,.5)}
 .status-pending{border-color:rgba(255,157,60,.5)}
 .status-confirmed{border-color:rgba(54,201,143,.4)}
 .status-shipped{border-color:rgba(255,106,44,.5)}

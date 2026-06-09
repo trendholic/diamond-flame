@@ -78,9 +78,13 @@ create table if not exists public.orders (
   email         text,
   address       text,
   items         jsonb not null default '[]'::jsonb,
-  total         numeric not null default 0,      -- PKR
-  status        text not null default 'pending', -- pending|confirmed|shipped|delivered|cancelled
-  created_at    timestamptz not null default now()
+  total             numeric not null default 0,      -- PKR
+  status            text not null default 'pending', -- pending|confirmed|shipped|delivered|cancelled
+  payment_method    text not null default 'cod',     -- cod | bank_transfer
+  payment_status    text not null default 'unpaid',  -- unpaid | paid | refunded
+  payment_ref       text,
+  payment_proof_url text,
+  created_at        timestamptz not null default now()
 );
 
 -- Align an existing orders table with the app (no-ops on a fresh table).
@@ -94,6 +98,10 @@ alter table public.orders add column if not exists address       text;
 alter table public.orders add column if not exists items         jsonb not null default '[]'::jsonb;
 alter table public.orders add column if not exists total         numeric not null default 0;
 alter table public.orders add column if not exists status        text not null default 'pending';
+alter table public.orders add column if not exists payment_method    text not null default 'cod';
+alter table public.orders add column if not exists payment_status    text not null default 'unpaid';
+alter table public.orders add column if not exists payment_ref       text;
+alter table public.orders add column if not exists payment_proof_url text;
 alter table public.orders add column if not exists created_at    timestamptz not null default now();
 
 -- ---------- DEALER PRICES (per-dealer overrides) ----------
@@ -271,6 +279,17 @@ create policy product_images_read on storage.objects
   for select using (bucket_id = 'product-images');
 create policy product_images_write on storage.objects
   for insert to authenticated with check (bucket_id = 'product-images');
+
+-- bank-transfer receipts (uploaded at checkout; public read)
+insert into storage.buckets (id, name, public)
+values ('payment-proofs', 'payment-proofs', true)
+on conflict (id) do nothing;
+drop policy if exists payment_proofs_read   on storage.objects;
+drop policy if exists payment_proofs_insert on storage.objects;
+create policy payment_proofs_read on storage.objects
+  for select using (bucket_id = 'payment-proofs');
+create policy payment_proofs_insert on storage.objects
+  for insert with check (bucket_id = 'payment-proofs');
 
 -- ============================================================
 --  SEED CATALOGUE (Diamond Flame kitchen products, PKR)

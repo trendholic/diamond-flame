@@ -118,19 +118,31 @@
   function renderOrders() {
     var t = el("ordersTable").querySelector("tbody");
     if (!orders.length) { t.innerHTML = '<tr><td class="empty-cell">No orders yet.</td></tr>'; return; }
-    var head = '<tr class="thead"><th>Ref</th><th>Business</th><th>Items</th><th>Total</th><th>Date</th><th>Status</th></tr>';
+    var head = '<tr class="thead"><th>Ref</th><th>Business</th><th>Items</th><th>Total</th><th>Payment</th><th>Date</th><th>Status</th></tr>';
+    var PAYSTATUS = ["unpaid", "paid", "refunded"];
     t.innerHTML = head + orders.map(function (o) {
       var itemCount = Array.isArray(o.items)
         ? o.items.reduce(function (s, i) { return s + Number(i.qty || 0); }, 0) : 0;
       var opts = STATUSES.map(function (s) {
         return '<option value="' + s + '"' + (s === o.status ? " selected" : "") + ">" + s + "</option>";
       }).join("");
+      var payOpts = PAYSTATUS.map(function (s) {
+        return '<option value="' + s + '"' + (s === (o.payment_status || "unpaid") ? " selected" : "") + ">" + s + "</option>";
+      }).join("");
+      var methodLabel = o.payment_method === "bank_transfer" ? "🏦 Bank transfer" : "💵 Cash on delivery";
+      var proof = o.payment_proof_url
+        ? '<a class="thumb-link" href="' + esc(o.payment_proof_url) + '" data-full="' + esc(o.payment_proof_url) + '" title="Receipt"><img src="' + esc(o.payment_proof_url) + '" alt="receipt" loading="lazy" /></a>'
+        : "";
       return "<tr>" +
         "<td><code>" + esc(o.ref || o.id) + "</code></td>" +
         "<td><strong>" + esc(o.business || "—") + "</strong><br><small>" + esc(o.customer_name || "") +
           " · " + esc(o.phone || "") + "</small></td>" +
         "<td>" + itemCount + " units</td>" +
         "<td>" + pkr(o.total) + "</td>" +
+        '<td class="pay-cell"><small>' + methodLabel + "</small>" +
+          (o.payment_ref ? '<br><small class="muted">Ref: ' + esc(o.payment_ref) + "</small>" : "") +
+          '<div class="pay-line"><select class="pay-select pay-' + esc(o.payment_status || "unpaid") + '" data-id="' + esc(o.id) + '">' +
+          payOpts + "</select>" + proof + "</div></td>" +
         "<td>" + esc(fmtDate(o.created_at)) + "</td>" +
         '<td><select class="status-select status-' + esc(o.status) + '" data-id="' + esc(o.id) + '">' +
           opts + "</select></td>" +
@@ -146,6 +158,17 @@
           if (o) o.status = sel.value;
           DF.toast("Order updated.");
           renderStats();
+        });
+      });
+    });
+    Array.prototype.forEach.call(t.querySelectorAll(".pay-select"), function (sel) {
+      sel.addEventListener("change", function () {
+        var id = sel.getAttribute("data-id");
+        db.from("orders").update({ payment_status: sel.value }).eq("id", id).then(function (res) {
+          if (res.error) { DF.toast(res.error.message, "warn"); return; }
+          var o = orders.filter(function (x) { return x.id === id; })[0];
+          if (o) o.payment_status = sel.value;
+          DF.toast("Payment marked " + sel.value + ".");
         });
       });
     });

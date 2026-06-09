@@ -521,7 +521,26 @@
       if (f.email && profile.email) f.email.value = profile.email;
       if (f.phone && profile.phone) f.phone.value = profile.phone;
     }
+    // payment: render bank details, default to Cash on Delivery
+    var b = (DF.cfg && DF.cfg.BANK) || {};
+    el("bankDetails").innerHTML =
+      bankRow("Bank", b.bank) + bankRow("Account title", b.title) +
+      bankRow("Account #", b.account) + bankRow("IBAN", b.iban);
+    el("orderForm").elements["payment_method"].value = "cod";
+    el("bankBox").hidden = true;
     el("checkoutOverlay").classList.add("open");
+  }
+  function bankRow(k, v) {
+    return v ? '<div class="bank-row"><span>' + esc(k) + "</span><strong>" + esc(v) + "</strong></div>" : "";
+  }
+
+  function uploadPaymentProof(file) {
+    var clean = file.name.replace(/[^\w.\-]+/g, "_");
+    var path = "proofs/" + Date.now() + "-" + Math.random().toString(36).slice(2, 7) + "-" + clean;
+    return db.storage.from("payment-proofs").upload(path, file).then(function (res) {
+      if (res.error) throw res.error;
+      return db.storage.from("payment-proofs").getPublicUrl(path).data.publicUrl;
+    });
   }
 
   function renderOrderSummary() {
@@ -548,6 +567,7 @@
         tier: hasWholesale(p) ? "wholesale" : "retail"
       };
     });
+    var method = f.payment_method.value;
     var order = {
       ref: "DF-" + Date.now().toString(36).toUpperCase(),
       user_id: profile ? profile.id : null,
@@ -558,20 +578,35 @@
       address: f.address.value.trim(),
       items: items,
       total: cartTotal(),
-      status: "pending"
+      status: "pending",
+      payment_method: method,
+      payment_status: "unpaid",
+      payment_ref: method === "bank_transfer" ? f.payment_ref.value.trim() : null
     };
     var submitBtn = f.querySelector('button[type="submit"]');
-    submitBtn.disabled = true; submitBtn.textContent = "Submitting…";
+    submitBtn.disabled = true; submitBtn.textContent = "Placing order…";
 
-    db.from("orders").insert(order).select().single().then(function (res) {
-      submitBtn.disabled = false; submitBtn.textContent = "Submit order";
+    var proofFile = method === "bank_transfer" ? f.payment_proof.files[0] : null;
+    var proofStep = proofFile
+      ? (function () { submitBtn.textContent = "Uploading receipt…"; return uploadPaymentProof(proofFile); })()
+      : Promise.resolve(null);
+
+    proofStep.then(function (proofUrl) {
+      order.payment_proof_url = proofUrl;
+      submitBtn.textContent = "Placing order…";
+      return db.from("orders").insert(order).select().single();
+    }).then(function (res) {
+      submitBtn.disabled = false; submitBtn.textContent = "Place order";
       if (res.error) { DF.toast("Order failed: " + res.error.message, "warn"); return; }
       cart = {}; saveCart(); updateCartUI();
-      el("doneMsg").textContent =
-        "Thank you. Order " + order.ref + " is logged — our team will call " +
-        order.phone + " to confirm stock and delivery.";
+      el("doneMsg").textContent = method === "bank_transfer"
+        ? "Thank you. Order " + order.ref + " is logged — we'll confirm once your transfer is verified."
+        : "Thank you. Order " + order.ref + " is logged — our team will call " + order.phone + " to confirm stock and delivery.";
       el("checkoutForm").hidden = true;
       el("checkoutDone").hidden = false;
+    }).catch(function (err) {
+      submitBtn.disabled = false; submitBtn.textContent = "Place order";
+      DF.toast("Order failed: " + (err && err.message ? err.message : err), "warn");
     });
   }
 
@@ -691,6 +726,11 @@
     el("closeCheckout").addEventListener("click", closeCheckout);
     el("doneClose").addEventListener("click", closeCheckout);
     el("orderForm").addEventListener("submit", submitOrder);
+    Array.prototype.forEach.call(el("orderForm").elements["payment_method"], function (r) {
+      r.addEventListener("change", function () {
+        el("bankBox").hidden = el("orderForm").elements["payment_method"].value !== "bank_transfer";
+      });
+    });
 
     var ctaJoin = el("ctaJoin");
     if (ctaJoin) ctaJoin.addEventListener("click", function () { setAuthMode("signup"); el("authOverlay").classList.add("open"); });

@@ -315,6 +315,18 @@
           <label>Phone<input name="phone" required inputmode="tel" autocomplete="tel" /></label>
           <label>Email<input name="email" type="email" autocomplete="email" /></label>
           <label>Delivery address<textarea name="address" required rows="3"></textarea></label>
+
+          <div class="pay-label">Payment method</div>
+          <div class="pay-methods">
+            <label class="pay-opt"><input type="radio" name="payment_method" value="cod" checked /> <span><strong>Cash on Delivery</strong><small>Pay when your order arrives</small></span></label>
+            <label class="pay-opt"><input type="radio" name="payment_method" value="bank_transfer" /> <span><strong>Bank Transfer</strong><small>Pay in advance &amp; upload your receipt</small></span></label>
+          </div>
+          <div class="bank-box" id="bankBox" hidden>
+            <div class="bank-details" id="bankDetails"></div>
+            <label>Transaction reference <small>(optional)</small><input name="payment_ref" /></label>
+            <label>Upload receipt <small>(optional)</small><input name="payment_proof" type="file" accept="image/*" class="file" /></label>
+          </div>
+
           <div class="order-summary" id="orderSummary"></div>
           <button class="btn btn-primary full" type="submit">Place order</button>
           <p class="trust-line">🔒 Secure &amp; encrypted · Cash on delivery available</p>
