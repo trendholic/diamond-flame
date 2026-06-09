@@ -50,6 +50,8 @@
       <div class="dash-tabs">
         <button class="dtab active" data-view="orders">Orders</button>
         <button class="dtab" data-view="products">Products</button>
+        <button class="dtab" data-view="requests">Dealer requests <span class="tab-badge" id="reqBadge" hidden>0</span></button>
+        <button class="dtab" data-view="pricing">Dealer pricing</button>
         <button class="dtab" data-view="customers">Customers</button>
       </div>
 
@@ -69,6 +71,29 @@
             <button class="btn btn-flame sm" id="newProductBtn">+ Add product</button>
           </div>
           <div class="table-wrap"><table id="productsTable"><tbody></tbody></table></div>
+        </div>
+      </div>
+
+      <!-- Dealer requests -->
+      <div class="view" id="view-requests" hidden>
+        <div class="panel">
+          <div class="panel-head"><h3>Dealer applications</h3><button class="ghost-btn" id="refreshRequests">Refresh</button></div>
+          <div class="table-wrap"><table id="requestsTable"><tbody></tbody></table></div>
+        </div>
+      </div>
+
+      <!-- Dealer pricing -->
+      <div class="view" id="view-pricing" hidden>
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Per-dealer pricing</h3>
+            <div class="pricing-controls">
+              <select id="pricingDealer"></select>
+              <button class="btn btn-flame sm" id="savePricing" disabled>Save prices</button>
+            </div>
+          </div>
+          <p class="pricing-note">Leave a cell blank to use the default wholesale price. A value overrides wholesale for this dealer only.</p>
+          <div class="table-wrap"><table id="pricingTable"><tbody></tbody></table></div>
         </div>
       </div>
 

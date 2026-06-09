@@ -73,7 +73,20 @@ form shows **live profit margins** as you type. Approve a dealer from
 **Dashboard → Customers → role dropdown** (or `update public.profiles set role
 = 'dealer' where email = '…'`).
 
-If you set the project up before this feature, run `supabase/migration-pricing.sql` once.
+## Dealers
+
+- **Approval queue:** customers can tick *"Apply for a dealer account"* at signup.
+  Pending applications appear under **Dashboard → Dealer requests** with
+  **Approve / Reject**. Approving sets their role to `dealer` so they see
+  wholesale pricing.
+- **Per-dealer pricing:** **Dashboard → Dealer pricing** → pick a dealer and set
+  a custom price on any product (blank = default wholesale). Stored in
+  `dealer_prices`; `catalogue()` applies the override automatically for that
+  dealer only.
+
+If you set the project up before these features, run the **single** consolidated
+migration `supabase/migration-dealers.sql` once — it brings the schema fully up
+to date (pricing tiers + dealers) and is safe to re-run.
 
 ## Security notes
 

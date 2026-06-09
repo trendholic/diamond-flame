@@ -11,18 +11,20 @@ create table if not exists public.profiles (
   full_name   text,
   business    text,            -- wholesale business / shop name
   phone       text,
-  role        text not null default 'customer',  -- 'customer' | 'admin'
-  created_at  timestamptz not null default now()
+  role          text not null default 'customer',  -- 'customer' | 'dealer' | 'admin'
+  dealer_status text not null default 'none',       -- none | pending | approved | rejected
+  created_at    timestamptz not null default now()
 );
 
 -- Align an existing profiles table (from an earlier schema) with the app.
 -- These are no-ops on a fresh table and safe to re-run.
-alter table public.profiles add column if not exists email      text;
-alter table public.profiles add column if not exists full_name  text;
-alter table public.profiles add column if not exists business   text;
-alter table public.profiles add column if not exists phone      text;
-alter table public.profiles add column if not exists role       text not null default 'customer';
-alter table public.profiles add column if not exists created_at timestamptz not null default now();
+alter table public.profiles add column if not exists email         text;
+alter table public.profiles add column if not exists full_name     text;
+alter table public.profiles add column if not exists business      text;
+alter table public.profiles add column if not exists phone         text;
+alter table public.profiles add column if not exists role          text not null default 'customer';
+alter table public.profiles add column if not exists dealer_status text not null default 'none';
+alter table public.profiles add column if not exists created_at    timestamptz not null default now();
 
 -- ---------- PRODUCTS ----------
 create table if not exists public.products (
@@ -82,6 +84,15 @@ alter table public.orders add column if not exists total         numeric not nul
 alter table public.orders add column if not exists status        text not null default 'pending';
 alter table public.orders add column if not exists created_at    timestamptz not null default now();
 
+-- ---------- DEALER PRICES (per-dealer overrides) ----------
+create table if not exists public.dealer_prices (
+  dealer_id  uuid not null references auth.users(id)      on delete cascade,
+  product_id uuid not null references public.products(id) on delete cascade,
+  price      numeric not null default 0,
+  created_at timestamptz not null default now(),
+  primary key (dealer_id, product_id)
+);
+
 -- ---------- ADMIN HELPER (security definer avoids RLS recursion) ----------
 create or replace function public.is_admin()
 returns boolean
@@ -115,7 +126,12 @@ language sql stable security definer set search_path = public
 as $$
   select p.id, p.name, p.brand, p.category, p.description, p.emoji, p.moq, p.stock,
          p.retail_price,
-         case when public.viewer_role() in ('dealer','admin') then p.wholesale_price end,
+         case when public.viewer_role() in ('dealer','admin') then
+           coalesce(
+             (select dp.price from public.dealer_prices dp
+              where dp.dealer_id = auth.uid() and dp.product_id = p.id),
+             p.wholesale_price)
+         end,
          case when public.viewer_role() = 'admin' then p.cost_price end
   from   public.products p
   where  p.active = true
@@ -133,13 +149,15 @@ security definer
 set search_path = public
 as $$
 begin
-  insert into public.profiles (id, email, full_name, business, phone)
+  insert into public.profiles (id, email, full_name, business, phone, dealer_status)
   values (
     new.id,
     new.email,
     coalesce(new.raw_user_meta_data->>'full_name', ''),
     coalesce(new.raw_user_meta_data->>'business', ''),
-    coalesce(new.raw_user_meta_data->>'phone', '')
+    coalesce(new.raw_user_meta_data->>'phone', ''),
+    case when coalesce(new.raw_user_meta_data->>'dealer_apply', '') = 'true'
+         then 'pending' else 'none' end
   )
   on conflict (id) do nothing;
   return new;
@@ -154,9 +172,10 @@ create trigger on_auth_user_created
 -- ============================================================
 --  ROW LEVEL SECURITY
 -- ============================================================
-alter table public.profiles enable row level security;
-alter table public.products enable row level security;
-alter table public.orders   enable row level security;
+alter table public.profiles      enable row level security;
+alter table public.products      enable row level security;
+alter table public.orders        enable row level security;
+alter table public.dealer_prices enable row level security;
 
 -- profiles: a user sees/edits their own; admins manage all
 drop policy if exists profiles_select_own  on public.profiles;
@@ -191,6 +210,14 @@ create policy orders_insert_any on public.orders
 create policy orders_select_own on public.orders
   for select using (auth.uid() = user_id);
 create policy orders_admin_all on public.orders
+  for all using (public.is_admin()) with check (public.is_admin());
+
+-- dealer_prices: a dealer reads their own; admins manage all
+drop policy if exists dealer_prices_own   on public.dealer_prices;
+drop policy if exists dealer_prices_admin on public.dealer_prices;
+create policy dealer_prices_own on public.dealer_prices
+  for select using (auth.uid() = dealer_id);
+create policy dealer_prices_admin on public.dealer_prices
   for all using (public.is_admin()) with check (public.is_admin());
 
 -- ============================================================

@@ -9,6 +9,8 @@
   var profile = null;
   var products = [];
   var orders = [];
+  var customers = [];
+  var requests = [];
 
   var STATUSES = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
 
@@ -52,7 +54,11 @@
   }
 
   function loadAll() {
-    Promise.all([loadProducts(), loadOrders(), loadCustomers()]).then(renderStats);
+    Promise.all([loadProducts(), loadOrders(), loadCustomers()]).then(function () {
+      renderStats();
+      renderRequests();
+      renderDealerOptions();
+    });
   }
 
   /* ---------- data ---------- */
@@ -74,8 +80,10 @@
 
   function loadCustomers() {
     return db.from("profiles").select("*").order("created_at", { ascending: false }).then(function (res) {
-      if (res.error) { renderCustomers([]); return; }
-      renderCustomers(res.data || []);
+      if (res.error) { customers = []; requests = []; renderCustomers(); return; }
+      customers = res.data || [];
+      requests = customers.filter(function (c) { return c.dealer_status === "pending"; });
+      renderCustomers();
     });
   }
 
@@ -88,14 +96,19 @@
     var lowStock = products.filter(function (p) { return p.stock <= p.moq; }).length;
     var cards = [
       { label: "Orders", value: orders.length },
-      { label: "Pending", value: pending },
+      { label: "Pending orders", value: pending },
       { label: "Revenue", value: pkr(revenue) },
       { label: "Products", value: products.length },
-      { label: "Low stock", value: lowStock }
+      { label: "Low stock", value: lowStock },
+      { label: "Dealer requests", value: requests.length }
     ];
     el("stats").innerHTML = cards.map(function (c) {
       return '<div class="stat"><strong>' + esc(String(c.value)) + "</strong><span>" + esc(c.label) + "</span></div>";
     }).join("");
+
+    var badge = el("reqBadge");
+    if (requests.length) { badge.hidden = false; badge.textContent = requests.length; }
+    else { badge.hidden = true; }
   }
 
   /* ---------- orders ---------- */
@@ -257,11 +270,11 @@
   }
 
   /* ---------- customers ---------- */
-  function renderCustomers(rows) {
+  function renderCustomers() {
     var t = el("customersTable").querySelector("tbody");
-    if (!rows.length) { t.innerHTML = '<tr><td class="empty-cell">No customers yet.</td></tr>'; return; }
+    if (!customers.length) { t.innerHTML = '<tr><td class="empty-cell">No customers yet.</td></tr>'; return; }
     var head = '<tr class="thead"><th>Business</th><th>Name</th><th>Contact</th><th>Role / access</th><th>Joined</th></tr>';
-    t.innerHTML = head + rows.map(function (c) {
+    t.innerHTML = head + customers.map(function (c) {
       var opts = ["customer", "dealer", "admin"].map(function (r) {
         return '<option value="' + r + '"' + (r === c.role ? " selected" : "") + ">" + r + "</option>";
       }).join("");
@@ -282,8 +295,120 @@
           DF.toast(sel.value === "dealer"
             ? "Dealer approved — they now see wholesale prices."
             : "Role updated to " + sel.value + ".");
+          loadCustomers().then(renderDealerOptions);
         });
       });
+    });
+  }
+
+  /* ---------- dealer requests ---------- */
+  function renderRequests() {
+    var t = el("requestsTable").querySelector("tbody");
+    if (!requests.length) { t.innerHTML = '<tr><td class="empty-cell">No pending dealer applications.</td></tr>'; return; }
+    var head = '<tr class="thead"><th>Business</th><th>Applicant</th><th>Contact</th><th>Applied</th><th></th></tr>';
+    t.innerHTML = head + requests.map(function (c) {
+      return "<tr>" +
+        "<td><strong>" + esc(c.business || "—") + "</strong></td>" +
+        "<td>" + esc(c.full_name || "—") + "</td>" +
+        "<td>" + esc(c.email || "") + "<br><small>" + esc(c.phone || "") + "</small></td>" +
+        "<td>" + esc(fmtDate(c.created_at)) + "</td>" +
+        '<td class="actions">' +
+          '<button class="btn btn-flame sm" data-approve="' + esc(c.id) + '">Approve</button> ' +
+          '<button class="link-btn danger" data-reject="' + esc(c.id) + '">Reject</button>' +
+        "</td></tr>";
+    }).join("");
+
+    Array.prototype.forEach.call(t.querySelectorAll("[data-approve]"), function (b) {
+      b.addEventListener("click", function () { decideRequest(b.getAttribute("data-approve"), true); });
+    });
+    Array.prototype.forEach.call(t.querySelectorAll("[data-reject]"), function (b) {
+      b.addEventListener("click", function () { decideRequest(b.getAttribute("data-reject"), false); });
+    });
+  }
+
+  function decideRequest(id, approve) {
+    var patch = approve
+      ? { role: "dealer", dealer_status: "approved" }
+      : { dealer_status: "rejected" };
+    db.from("profiles").update(patch).eq("id", id).then(function (res) {
+      if (res.error) { DF.toast(res.error.message, "warn"); return; }
+      DF.toast(approve ? "Dealer approved." : "Application rejected.");
+      loadCustomers().then(function () { renderStats(); renderRequests(); renderDealerOptions(); });
+    });
+  }
+
+  /* ---------- per-dealer pricing ---------- */
+  function dealers() {
+    return customers.filter(function (c) { return c.role === "dealer"; });
+  }
+
+  function renderDealerOptions() {
+    var sel = el("pricingDealer");
+    var prev = sel.value;
+    var ds = dealers();
+    if (!ds.length) {
+      sel.innerHTML = '<option value="">No dealers yet</option>';
+      el("savePricing").disabled = true;
+      el("pricingTable").querySelector("tbody").innerHTML =
+        '<tr><td class="empty-cell">Approve a dealer first to set custom prices.</td></tr>';
+      return;
+    }
+    sel.innerHTML = ds.map(function (d) {
+      return '<option value="' + esc(d.id) + '">' + esc(d.business || d.full_name || d.email) + "</option>";
+    }).join("");
+    if (prev && ds.some(function (d) { return d.id === prev; })) sel.value = prev;
+    loadDealerPricing();
+  }
+
+  function loadDealerPricing() {
+    var dealerId = el("pricingDealer").value;
+    if (!dealerId) return;
+    el("savePricing").disabled = false;
+    db.from("dealer_prices").select("*").eq("dealer_id", dealerId).then(function (res) {
+      var overrides = {};
+      (res.data || []).forEach(function (r) { overrides[r.product_id] = r.price; });
+      renderPricingTable(overrides);
+    });
+  }
+
+  function renderPricingTable(overrides) {
+    var t = el("pricingTable").querySelector("tbody");
+    if (!products.length) { t.innerHTML = '<tr><td class="empty-cell">No products.</td></tr>'; return; }
+    var head = '<tr class="thead"><th>Product</th><th>Default wholesale</th><th>This dealer\'s price</th></tr>';
+    t.innerHTML = head + products.map(function (p) {
+      var ov = overrides[p.id];
+      return "<tr>" +
+        "<td>" + esc(p.emoji || "📦") + " <strong>" + esc(p.name) + "</strong><br><small>" +
+          esc(p.brand || "") + " · " + esc(p.category) + "</small></td>" +
+        "<td>" + pkr(p.wholesale_price) + "</td>" +
+        '<td><input class="price-input" type="number" min="0" step="1" ' +
+          'data-pid="' + esc(p.id) + '" placeholder="' + p.wholesale_price + '" ' +
+          'value="' + (ov != null ? ov : "") + '" /></td>' +
+        "</tr>";
+    }).join("");
+  }
+
+  function savePricing() {
+    var dealerId = el("pricingDealer").value;
+    if (!dealerId) return;
+    var inputs = el("pricingTable").querySelectorAll(".price-input");
+    var upserts = [], deletes = [];
+    Array.prototype.forEach.call(inputs, function (inp) {
+      var pid = inp.getAttribute("data-pid");
+      var raw = inp.value.trim();
+      if (raw === "") { deletes.push(pid); }
+      else { upserts.push({ dealer_id: dealerId, product_id: pid, price: Number(raw) }); }
+    });
+    var btn = el("savePricing");
+    btn.disabled = true; btn.textContent = "Saving…";
+    var jobs = [];
+    if (upserts.length) jobs.push(db.from("dealer_prices").upsert(upserts));
+    if (deletes.length) jobs.push(db.from("dealer_prices").delete().eq("dealer_id", dealerId).in("product_id", deletes));
+    Promise.all(jobs).then(function (results) {
+      btn.disabled = false; btn.textContent = "Save prices";
+      var err = results.filter(function (r) { return r && r.error; })[0];
+      if (err) { DF.toast(err.error.message, "warn"); return; }
+      DF.toast("Dealer prices saved.");
     });
   }
 
@@ -304,18 +429,25 @@
     });
 
     el("refreshOrders").addEventListener("click", function () { loadOrders().then(renderStats); });
-    el("refreshCustomers").addEventListener("click", loadCustomers);
+    el("refreshCustomers").addEventListener("click", function () {
+      loadCustomers().then(function () { renderStats(); renderRequests(); renderDealerOptions(); });
+    });
+    el("refreshRequests").addEventListener("click", function () {
+      loadCustomers().then(function () { renderStats(); renderRequests(); renderDealerOptions(); });
+    });
     el("newProductBtn").addEventListener("click", function () { openProduct(null); });
     el("closeProduct").addEventListener("click", function () { el("productOverlay").classList.remove("open"); });
     el("productForm").addEventListener("submit", saveProduct);
     el("productForm").addEventListener("input", renderMargins);
+    el("pricingDealer").addEventListener("change", loadDealerPricing);
+    el("savePricing").addEventListener("click", savePricing);
 
     Array.prototype.forEach.call(document.querySelectorAll(".dtab"), function (tab) {
       tab.addEventListener("click", function () {
         Array.prototype.forEach.call(document.querySelectorAll(".dtab"), function (t) { t.classList.remove("active"); });
         tab.classList.add("active");
         var view = tab.getAttribute("data-view");
-        ["orders", "products", "customers"].forEach(function (v) {
+        ["orders", "products", "requests", "pricing", "customers"].forEach(function (v) {
           el("view-" + v).hidden = v !== view;
         });
       });

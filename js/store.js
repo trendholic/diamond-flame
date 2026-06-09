@@ -310,19 +310,25 @@
   function handleSignup(e) {
     e.preventDefault();
     var f = e.target;
+    var applyingDealer = f.dealer_apply.checked;
     db.auth.signUp({
       email: f.email.value.trim(),
       password: f.password.value,
       options: { data: {
         full_name: f.full_name.value.trim(),
         business: f.business.value.trim(),
-        phone: f.phone.value.trim()
+        phone: f.phone.value.trim(),
+        dealer_apply: applyingDealer ? "true" : "false"
       } }
     }).then(function (res) {
       if (res.error) { DF.toast(res.error.message, "warn"); return; }
       f.reset();
-      if (res.data.session) { closeAuth(); refreshAuthUI(); DF.toast("Account created."); }
-      else { closeAuth(); DF.toast("Account created — check your email to confirm, then sign in."); }
+      closeAuth();
+      var dealerMsg = applyingDealer
+        ? " Your dealer application is pending — you'll see wholesale prices once an admin approves it."
+        : "";
+      if (res.data.session) { refreshAuthUI(); loadProducts(); DF.toast("Account created." + dealerMsg); }
+      else { DF.toast("Account created — check your email to confirm, then sign in." + dealerMsg); }
     });
   }
 

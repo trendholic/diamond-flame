@@ -227,6 +227,15 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.88em}
 .dtab{background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:30px;
   padding:9px 20px;font:inherit;font-size:13.5px;cursor:pointer;transition:all .2s}
 .dtab.active{background:linear-gradient(135deg,var(--ember),var(--flame));border-color:transparent;color:#fff;font-weight:600}
+.tab-badge{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;margin-left:4px;
+  border-radius:9px;background:var(--ember);color:#fff;font-size:11px;font-weight:700;vertical-align:middle}
+.pricing-controls{display:flex;gap:10px;align-items:center}
+#pricingDealer{background:var(--panel-2);border:1px solid var(--line);color:var(--ink);border-radius:8px;
+  padding:8px 12px;font:inherit;font-size:13px;cursor:pointer;max-width:240px}
+.pricing-note{color:var(--muted);font-size:13px;margin:0 20px 12px;padding-top:12px}
+.price-input{background:#10121a;border:1px solid var(--line);color:var(--ink);border-radius:8px;
+  padding:7px 10px;font:inherit;font-size:13px;width:130px}
+.price-input:focus{outline:none;border-color:var(--flame)}
 
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
 .panel-head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--line)}
