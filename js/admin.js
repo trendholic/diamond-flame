@@ -273,15 +273,18 @@
   function renderCustomers() {
     var t = el("customersTable").querySelector("tbody");
     if (!customers.length) { t.innerHTML = '<tr><td class="empty-cell">No customers yet.</td></tr>'; return; }
-    var head = '<tr class="thead"><th>Business</th><th>Name</th><th>Contact</th><th>Role / access</th><th>Joined</th></tr>';
+    var head = '<tr class="thead"><th>Business</th><th>Name</th><th>Contact</th><th>Documents</th><th>Role / access</th><th>Joined</th></tr>';
     t.innerHTML = head + customers.map(function (c) {
       var opts = ["customer", "dealer", "admin"].map(function (r) {
         return '<option value="' + r + '"' + (r === c.role ? " selected" : "") + ">" + r + "</option>";
       }).join("");
       return "<tr>" +
-        "<td><strong>" + esc(c.business || "—") + "</strong></td>" +
+        "<td><strong>" + esc(c.business || "—") + "</strong>" +
+          (c.dealer_status && c.dealer_status !== "none"
+            ? '<br><span class="ds ds-' + esc(c.dealer_status) + '">' + esc(c.dealer_status) + "</span>" : "") + "</td>" +
         "<td>" + esc(c.full_name || "—") + "</td>" +
         "<td>" + esc(c.email || "") + "<br><small>" + esc(c.phone || "") + "</small></td>" +
+        '<td class="verify-cell">' + verificationCell(c) + "</td>" +
         '<td><select class="role-select" data-id="' + esc(c.id) + '">' + opts + "</select></td>" +
         "<td>" + esc(fmtDate(c.created_at)) + "</td>" +
         "</tr>";
@@ -301,21 +304,27 @@
     });
   }
 
-  /* ---------- dealer requests ---------- */
+  /* ---------- dealer documents ---------- */
+  // Thumbnail opens the in-dashboard lightbox (see init) via [data-full].
   function docThumb(url, title) {
-    return '<a class="thumb-link" href="' + esc(url) + '" target="_blank" rel="noopener" title="' +
-      esc(title) + '"><img src="' + esc(url) + '" alt="' + esc(title) + '" loading="lazy" /></a>';
+    return '<button type="button" class="thumb-link" data-full="' + esc(url) + '" title="' +
+      esc(title) + '" aria-label="' + esc(title) + '"><img src="' + esc(url) +
+      '" alt="' + esc(title) + '" loading="lazy" /></button>';
   }
   function verificationCell(c) {
     var parts = [];
-    if (c.whatsapp) parts.push('<div class="doc-wa">📱 ' + esc(c.whatsapp) + "</div>");
+    if (c.whatsapp) {
+      var wa = String(c.whatsapp).replace(/[^\d+]/g, "");
+      parts.push('<a class="doc-wa" href="https://wa.me/' + esc(wa.replace(/^\+/, "")) +
+        '" target="_blank" rel="noopener">📱 ' + esc(c.whatsapp) + "</a>");
+    }
     var thumbs = "";
     if (c.shop_card_url) thumbs += docThumb(c.shop_card_url, "Shop card");
     (Array.isArray(c.shop_photos) ? c.shop_photos : []).forEach(function (u, i) {
       thumbs += docThumb(u, "Shop photo " + (i + 1));
     });
     if (thumbs) parts.push('<div class="doc-thumbs">' + thumbs + "</div>");
-    return parts.length ? parts.join("") : '<small class="muted">No documents</small>';
+    return parts.length ? parts.join("") : '<small class="muted">—</small>';
   }
 
   function renderRequests() {
@@ -473,8 +482,17 @@
     document.querySelectorAll(".modal-overlay").forEach(function (ov) {
       ov.addEventListener("click", function (e) { if (e.target === ov) ov.classList.remove("open"); });
     });
+
+    // Document lightbox — any thumbnail with [data-full] opens a full preview.
+    function closeLightbox() { el("lightbox").hidden = true; el("lightboxImg").src = ""; }
+    document.addEventListener("click", function (e) {
+      var thumb = e.target.closest && e.target.closest(".thumb-link[data-full]");
+      if (thumb) { el("lightboxImg").src = thumb.getAttribute("data-full"); el("lightbox").hidden = false; return; }
+      if (e.target === el("lightbox") || (e.target.closest && e.target.closest("#lightboxClose"))) closeLightbox();
+    });
+
     document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape") el("productOverlay").classList.remove("open");
+      if (e.key === "Escape") { el("productOverlay").classList.remove("open"); closeLightbox(); }
     });
 
     boot();
