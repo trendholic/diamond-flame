@@ -445,3 +445,11 @@ tr.inactive{opacity:.5}
 .asset-up:hover{border-color:var(--flame)}
 .asset-up input{display:none}
 .brand-sub{grid-column:1/-1;font-family:'Sora',sans-serif;font-weight:600;color:var(--ink);border-top:1px solid var(--line);padding-top:14px;margin-top:4px}
+
+/* import-from-URL + size hints */
+.import-box{background:rgba(255,106,44,.06);border:1px solid var(--line-2);border-radius:12px;padding:12px}
+.import-row{display:flex;gap:8px}
+.import-row input{flex:1;background:#10121a;border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:10px 12px;font:inherit;font-size:14px}
+.import-row input:focus{outline:none;border-color:var(--flame)}
+.import-status{margin:8px 0 0;font-size:12px;color:var(--muted)}
+.size-hint{color:var(--flame-2);font-weight:400}

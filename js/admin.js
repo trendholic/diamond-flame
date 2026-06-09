@@ -86,7 +86,7 @@
     thumbs += heroSlideFiles.map(function (f) {
       return '<div class="gthumb"><img src="' + URL.createObjectURL(f) + '" alt="" /><span class="gcover">new</span></div>';
     }).join("");
-    return '<div class="brand-field brand-wide"><label>Hero slides <small>(rotate automatically; up to 6)</small></label>' +
+    return '<div class="brand-field brand-wide"><label>Hero slides <small>(rotate automatically; up to 6 · recommended ~1200×1000 px)</small></label>' +
       '<div class="gallery-edit">' + (thumbs || '<p class="gempty">No hero images yet.</p>') + "</div>" +
       '<label class="asset-up" style="margin-top:8px">Upload hero images<input type="file" accept="image/*" multiple id="heroSlidesInput" /></label></div>';
   }
@@ -95,12 +95,20 @@
     products.forEach(function (p) { if (p.category && !seen[p.category]) { seen[p.category] = 1; out.push(p.category); } });
     return out;
   }
+  var ASSET_HINTS = {
+    logo_url: "Transparent PNG, ~240×80 px",
+    favicon_url: "Square PNG, 512×512 px",
+    banner_url: "Wide image, ~1600×500 px",
+    "col:": "~800×600 px"
+  };
   function brandImageField(key, label) {
     var url = (key in assetUrls) ? assetUrls[key] : (settingsMap[key] || "");
     var pending = assetFiles[key];
+    var hint = ASSET_HINTS[key] || (key.indexOf("col:") === 0 ? ASSET_HINTS["col:"] : "");
     var prev = pending ? '<img src="' + URL.createObjectURL(pending) + '" alt="" />'
       : (url ? '<img src="' + esc(url) + '" alt="" />' : '<span class="aempty">No image</span>');
-    return '<div class="brand-field"><label>' + esc(label) + "</label>" +
+    return '<div class="brand-field"><label>' + esc(label) +
+      (hint ? ' <small class="size-hint">' + esc(hint) + "</small>" : "") + "</label>" +
       '<div class="asset"><div class="asset-prev">' + prev + "</div>" +
       '<div class="asset-actions"><label class="asset-up">Upload<input type="file" accept="image/*" class="asset-file" data-key="' + esc(key) + '" /></label>' +
       ((url || pending) ? '<button type="button" class="link-btn danger asset-clear" data-key="' + esc(key) + '">Remove</button>' : "") +
@@ -534,6 +542,8 @@
       : (p && p.image_url ? [p.image_url] : []);
     keptImages = existing;
     f["images_files"].value = "";
+    el("importUrl").value = "";
+    el("importStatus").textContent = "Pulls title, price, image & description from the page. Review before saving.";
     renderGallery();
     renderVariantRows(p && Array.isArray(p.variants) ? p.variants : []);
     renderMargins();
@@ -623,6 +633,64 @@
     return db.storage.from("product-images").upload(path, file).then(function (res) {
       if (res.error) throw res.error;
       return db.storage.from("product-images").getPublicUrl(path).data.publicUrl;
+    });
+  }
+
+  /* ---------- import product from a URL ---------- */
+  function parseProduct(html) {
+    var doc = new DOMParser().parseFromString(html, "text/html");
+    var out = {};
+    Array.prototype.forEach.call(doc.querySelectorAll('script[type="application/ld+json"]'), function (s) {
+      try {
+        var json = JSON.parse(s.textContent);
+        var arr = Array.isArray(json) ? json : (json["@graph"] ? json["@graph"] : [json]);
+        arr.forEach(function (node) {
+          if (!node || typeof node !== "object") return;
+          var type = node["@type"];
+          var isProduct = type === "Product" || (Array.isArray(type) && type.indexOf("Product") > -1);
+          if (!isProduct) return;
+          if (!out.name && node.name) out.name = String(node.name);
+          if (!out.description && node.description) out.description = String(node.description);
+          if (!out.image && node.image) out.image = Array.isArray(node.image) ? node.image[0] : (node.image.url || node.image);
+          if (!out.price && node.offers) {
+            var of = Array.isArray(node.offers) ? node.offers[0] : node.offers;
+            if (of && of.price) out.price = parseFloat(String(of.price).replace(/[^\d.]/g, ""));
+          }
+        });
+      } catch (e) {}
+    });
+    function meta(sel) { var m = doc.querySelector(sel); return m ? (m.getAttribute("content") || "") : ""; }
+    if (!out.name) out.name = meta('meta[property="og:title"]') || (doc.title || "");
+    if (!out.description) out.description = meta('meta[property="og:description"]');
+    if (!out.image) out.image = meta('meta[property="og:image"]') || meta('meta[name="twitter:image"]');
+    if (!out.price) {
+      var p = meta('meta[property="product:price:amount"]') || meta('meta[property="og:price:amount"]') || meta('meta[itemprop="price"]');
+      if (p) out.price = parseFloat(p.replace(/[^\d.]/g, ""));
+    }
+    if (out.name) out.name = out.name.trim().slice(0, 120);
+    if (out.description) out.description = out.description.trim().slice(0, 400);
+    return out;
+  }
+  function importFromUrl() {
+    var url = el("importUrl").value.trim();
+    var status = el("importStatus");
+    if (!url) { status.textContent = "Paste a product URL first."; return; }
+    var f = el("productForm").elements;
+    var proxy = (DF.cfg && DF.cfg.IMPORT_PROXY) || "https://api.allorigins.win/get?url=";
+    status.textContent = "Fetching…";
+    fetch(proxy + encodeURIComponent(url)).then(function (r) { return r.json(); }).then(function (j) {
+      var html = j.contents || j.body || j.data || "";
+      if (!html) throw new Error("empty response");
+      var d = parseProduct(html);
+      var got = [];
+      if (d.name) { f["name"].value = d.name; got.push("name"); }
+      if (d.description) { f["description"].value = d.description; got.push("description"); }
+      if (d.price) { f["retail_price"].value = Math.round(d.price); got.push("price"); }
+      if (d.image) { keptImages = [d.image]; f["image_url"].value = d.image; renderGallery(); got.push("image"); }
+      renderMargins();
+      status.textContent = got.length ? "Imported: " + got.join(", ") + ". Review, set wholesale/category, then Save." : "No product data found on that page — fill it in manually.";
+    }).catch(function (e) {
+      status.textContent = "Couldn't import automatically (" + (e.message || e) + "). Try a different URL or fill manually.";
     });
   }
 
@@ -920,6 +988,7 @@
       bindVariantRowRemovers();
     });
     el("productForm").elements["images_files"].addEventListener("change", renderGallery);
+    el("importBtn").addEventListener("click", importFromUrl);
     el("saveBranding").addEventListener("click", saveBranding);
     el("pricingDealer").addEventListener("change", loadDealerPricing);
     el("savePricing").addEventListener("click", savePricing);

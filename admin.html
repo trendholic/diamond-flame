@@ -153,6 +153,13 @@
       <form id="productForm" class="auth-form">
         <input type="hidden" name="id" />
         <input type="hidden" name="image_url" />
+        <div class="import-box">
+          <div class="import-row">
+            <input id="importUrl" type="url" placeholder="Paste a product URL to auto-fill…" />
+            <button type="button" class="btn btn-flame sm" id="importBtn">Import</button>
+          </div>
+          <p class="import-status" id="importStatus">Pulls title, price, image &amp; description from the page. Review before saving.</p>
+        </div>
         <label>Name<input name="name" required /></label>
         <div class="two">
           <label>Type / material <small>(e.g. Stainless Steel)</small><input name="brand" /></label>
@@ -160,7 +167,7 @@
         </div>
         <label>Description<textarea name="description" rows="2"></textarea></label>
 
-        <label>Product images <small>(first is the cover · up to 6)</small>
+        <label>Product images <small>(first is the cover · up to 6 · recommended 1200×1200 px square, JPG/PNG)</small>
           <input name="images_files" type="file" accept="image/*" multiple class="file" /></label>
         <div class="gallery-edit" id="galleryEdit"></div>
 

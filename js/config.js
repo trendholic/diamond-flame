@@ -11,6 +11,8 @@ window.DF_CONFIG = {
   // It should accept POST {message} and return JSON {reply}. Leave "" to use the
   // built-in assistant only.
   AI_ENDPOINT: "",
+  // CORS proxy used by "Import from URL" to read another site's product page.
+  IMPORT_PROXY: "https://api.allorigins.win/get?url=",
   // Bank details shown to customers who choose "Bank Transfer" — edit these.
   BANK: {
     bank: "Meezan Bank",
