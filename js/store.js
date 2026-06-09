@@ -105,9 +105,37 @@
     }
     if (s.hero_headline && el("heroHeadline")) el("heroHeadline").textContent = s.hero_headline;
     if (s.hero_subtext && el("heroSub")) el("heroSub").textContent = s.hero_subtext;
-    if (s.hero_image_url && el("heroProduct")) {
-      el("heroProduct").style.backgroundImage = "url('" + s.hero_image_url + "')";
-      el("heroProduct").classList.add("has-image");
+
+    // hero slides (crossfade). Falls back to a single hero image, then the emoji.
+    var heroImgs = [];
+    try { heroImgs = JSON.parse(s.hero_images || "[]"); } catch (e) { heroImgs = []; }
+    if (!Array.isArray(heroImgs)) heroImgs = [];
+    if (!heroImgs.length && s.hero_image_url) heroImgs = [s.hero_image_url];
+    var hp = el("heroProduct");
+    if (heroImgs.length && hp) {
+      hp.classList.add("has-slides");
+      Array.prototype.forEach.call(hp.querySelectorAll(".hero-slide"), function (x) { x.remove(); });
+      heroImgs.forEach(function (u, i) {
+        var d = document.createElement("div");
+        d.className = "hero-slide" + (i === 0 ? " active" : "");
+        d.style.backgroundImage = "url('" + u + "')";
+        hp.insertBefore(d, hp.firstChild);
+      });
+      var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (heroImgs.length > 1 && !reduce) {
+        var slides = hp.querySelectorAll(".hero-slide"), idx = 0;
+        setInterval(function () {
+          slides[idx].classList.remove("active");
+          idx = (idx + 1) % slides.length;
+          slides[idx].classList.add("active");
+        }, 5000);
+      }
+    }
+
+    if (s.favicon_url) {
+      var link = document.querySelector("link[rel='icon']");
+      if (!link) { link = document.createElement("link"); link.rel = "icon"; document.head.appendChild(link); }
+      link.href = s.favicon_url;
     }
     if (s.banner_url && el("promoBanner")) {
       el("promoImg").src = s.banner_url;

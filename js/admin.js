@@ -15,6 +15,7 @@
   var customerRole = "";
   var keptImages = [];
   var settingsMap = {}, assetUrls = {}, assetFiles = {}, brandImageKeys = [];
+  var heroSlides = [], heroSlideFiles = [];
 
   var STATUSES = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
 
@@ -72,8 +73,22 @@
       settingsMap = {};
       (res.data || []).forEach(function (r) { settingsMap[r.key] = r.value; });
       assetUrls = {}; assetFiles = {};
+      try { heroSlides = JSON.parse(settingsMap.hero_images || "[]"); } catch (e) { heroSlides = []; }
+      if (!Array.isArray(heroSlides)) heroSlides = [];
+      heroSlideFiles = [];
       renderBranding();
     });
+  }
+  function heroSlidesField() {
+    var thumbs = heroSlides.map(function (u, i) {
+      return '<div class="gthumb"><img src="' + esc(u) + '" alt="" /><button type="button" class="gdel hero-del" data-i="' + i + '" aria-label="Remove">✕</button></div>';
+    }).join("");
+    thumbs += heroSlideFiles.map(function (f) {
+      return '<div class="gthumb"><img src="' + URL.createObjectURL(f) + '" alt="" /><span class="gcover">new</span></div>';
+    }).join("");
+    return '<div class="brand-field brand-wide"><label>Hero slides <small>(rotate automatically; up to 6)</small></label>' +
+      '<div class="gallery-edit">' + (thumbs || '<p class="gempty">No hero images yet.</p>') + "</div>" +
+      '<label class="asset-up" style="margin-top:8px">Upload hero images<input type="file" accept="image/*" multiple id="heroSlidesInput" /></label></div>';
   }
   function categoriesList() {
     var seen = {}, out = [];
@@ -104,10 +119,11 @@
   }
   function renderBranding() {
     var cats = categoriesList();
-    brandImageKeys = ["logo_url", "hero_image_url", "banner_url"].concat(cats.map(function (c) { return "col:" + c; }));
+    brandImageKeys = ["logo_url", "favicon_url", "banner_url"].concat(cats.map(function (c) { return "col:" + c; }));
     el("brandingBody").innerHTML =
       brandImageField("logo_url", "Logo") +
-      brandImageField("hero_image_url", "Hero image") +
+      brandImageField("favicon_url", "Favicon (small square icon)") +
+      heroSlidesField() +
       brandTextField("hero_headline", "Hero headline") +
       brandTextField("hero_subtext", "Hero subtext", true) +
       brandImageField("banner_url", "Promo banner image") +
@@ -115,6 +131,19 @@
       '<div class="brand-sub">Collection images</div>' +
       cats.map(function (c) { return brandImageField("col:" + c, c); }).join("");
     var body = el("brandingBody");
+    var hsInput = body.querySelector("#heroSlidesInput");
+    if (hsInput) hsInput.addEventListener("change", function () {
+      Array.prototype.push.apply(heroSlideFiles, Array.prototype.slice.call(hsInput.files, 0, 6 - heroSlides.length - heroSlideFiles.length));
+      captureBrandTexts();
+      renderBranding();
+    });
+    Array.prototype.forEach.call(body.querySelectorAll(".hero-del"), function (btn) {
+      btn.addEventListener("click", function () {
+        heroSlides.splice(parseInt(btn.getAttribute("data-i"), 10), 1);
+        captureBrandTexts();
+        renderBranding();
+      });
+    });
     Array.prototype.forEach.call(body.querySelectorAll(".asset-file"), function (inp) {
       inp.addEventListener("change", function () {
         var file = inp.files[0]; if (!file) return;
@@ -149,7 +178,10 @@
     var uploads = pendingKeys.map(function (k) {
       return uploadSiteAsset(assetFiles[k]).then(function (url) { assetUrls[k] = url; });
     });
-    Promise.all(uploads).then(function () {
+    var heroJob = Promise.all(heroSlideFiles.map(uploadSiteAsset)).then(function (urls) {
+      heroSlides = heroSlides.concat(urls); heroSlideFiles = [];
+    });
+    Promise.all(uploads.concat([heroJob])).then(function () {
       var rows = [];
       brandImageKeys.forEach(function (k) {
         var val = (k in assetUrls) ? assetUrls[k] : (settingsMap[k] || null);
@@ -158,6 +190,7 @@
       ["hero_headline", "hero_subtext", "banner_link"].forEach(function (k) {
         rows.push({ key: k, value: (settingsMap[k] || "").trim() || null });
       });
+      rows.push({ key: "hero_images", value: JSON.stringify(heroSlides) });
       return db.from("settings").upsert(rows);
     }).then(function (res) {
       btn.disabled = false; btn.textContent = "Save branding";

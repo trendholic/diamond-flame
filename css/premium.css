@@ -439,6 +439,11 @@ body.pd-open{overflow:hidden}
 .brand-mark.has-logo{filter:none}
 .brand-mark.has-logo img{height:34px;width:auto;display:block;border-radius:6px}
 .hero-product.has-image{background-size:cover;background-position:center}
+.hero-product.has-slides{background:none}
+.hero-product.has-slides .hero-emoji,.hero-product.has-slides .hero-spec{display:none}
+.hero-slide{position:absolute;inset:0;background-size:cover;background-position:center;border-radius:28px;
+  opacity:0;transition:opacity 1s ease;box-shadow:var(--shadow-lg)}
+.hero-slide.active{opacity:1}
 .hero-product.has-image .hero-emoji{display:none}
 .hero-product.has-image .hero-spec{display:none}
 .promo{padding:8px 0 8px}

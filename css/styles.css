@@ -432,6 +432,7 @@ tr.inactive{opacity:.5}
 /* branding manager */
 .branding-body{padding:18px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px}
 .brand-field{display:flex;flex-direction:column;gap:8px}
+.brand-wide{grid-column:1/-1}
 .brand-field label{font-size:13px;color:var(--muted)}
 .brand-text{background:#10121a;border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:10px 12px;font:inherit;font-size:14px;width:100%;resize:vertical}
 .brand-text:focus{outline:none;border-color:var(--flame)}
