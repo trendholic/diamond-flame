@@ -671,27 +671,70 @@
     if (out.description) out.description = out.description.trim().slice(0, 400);
     return out;
   }
+  // Several public CORS proxies; we try each until one returns usable HTML.
+  function importProxies(u) {
+    var list = [];
+    if (DF.cfg && DF.cfg.IMPORT_PROXY) list.push(DF.cfg.IMPORT_PROXY + encodeURIComponent(u));
+    list.push("https://api.allorigins.win/raw?url=" + encodeURIComponent(u));
+    list.push("https://corsproxy.io/?url=" + encodeURIComponent(u));
+    list.push("https://api.codetabs.com/v1/proxy/?quest=" + encodeURIComponent(u));
+    list.push("https://thingproxy.freeboard.io/fetch/" + u);
+    return list;
+  }
+  // Accept either raw HTML or a JSON-wrapped payload ({contents:"..."}).
+  function extractHtml(text) {
+    var t = (text || "").trim();
+    if (t.charAt(0) === "{") {
+      try { var j = JSON.parse(t); return j.contents || j.body || j.data || ""; } catch (e) { return ""; }
+    }
+    return text || "";
+  }
+  function looksLikeHtml(html) {
+    if (!html || html.length < 200) return false;
+    if (html.indexOf("<") === -1) return false;
+    if (/^\s*(oops|error|rate ?limit|forbidden|access denied|too many requests)/i.test(html)) return false;
+    return true;
+  }
+
   function importFromUrl() {
     var url = el("importUrl").value.trim();
     var status = el("importStatus");
     if (!url) { status.textContent = "Paste a product URL first."; return; }
+    if (!/^https?:\/\//i.test(url)) { url = "https://" + url; el("importUrl").value = url; }
     var f = el("productForm").elements;
-    var proxy = (DF.cfg && DF.cfg.IMPORT_PROXY) || "https://api.allorigins.win/get?url=";
-    status.textContent = "Fetching…";
-    fetch(proxy + encodeURIComponent(url)).then(function (r) { return r.json(); }).then(function (j) {
-      var html = j.contents || j.body || j.data || "";
-      if (!html) throw new Error("empty response");
-      var d = parseProduct(html);
+    var proxies = importProxies(url);
+
+    function applyData(d) {
       var got = [];
       if (d.name) { f["name"].value = d.name; got.push("name"); }
       if (d.description) { f["description"].value = d.description; got.push("description"); }
       if (d.price) { f["retail_price"].value = Math.round(d.price); got.push("price"); }
       if (d.image) { keptImages = [d.image]; f["image_url"].value = d.image; renderGallery(); got.push("image"); }
       renderMargins();
-      status.textContent = got.length ? "Imported: " + got.join(", ") + ". Review, set wholesale/category, then Save." : "No product data found on that page — fill it in manually.";
-    }).catch(function (e) {
-      status.textContent = "Couldn't import automatically (" + (e.message || e) + "). Try a different URL or fill manually.";
-    });
+      return got;
+    }
+
+    function attempt(i) {
+      if (i >= proxies.length) {
+        status.textContent = "Couldn't read that page automatically — it may block bots or have no product data. Please fill the fields manually.";
+        return;
+      }
+      status.textContent = "Fetching…" + (i ? " (source " + (i + 1) + ")" : "");
+      fetch(proxies[i]).then(function (r) {
+        if (!r.ok) throw new Error("status " + r.status);
+        return r.text();
+      }).then(function (text) {
+        var html = extractHtml(text);
+        if (!looksLikeHtml(html)) throw new Error("blocked");
+        var d = parseProduct(html);
+        if (!d.name && !d.image && !d.price) throw new Error("no data");
+        var got = applyData(d);
+        status.textContent = got.length
+          ? "Imported: " + got.join(", ") + ". Review, set wholesale + category, then Save."
+          : "Page read, but no product fields found — fill them in manually.";
+      }).catch(function () { attempt(i + 1); });
+    }
+    attempt(0);
   }
 
   function saveProduct(e) {
