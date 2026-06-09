@@ -15,6 +15,15 @@ create table if not exists public.profiles (
   created_at  timestamptz not null default now()
 );
 
+-- Align an existing profiles table (from an earlier schema) with the app.
+-- These are no-ops on a fresh table and safe to re-run.
+alter table public.profiles add column if not exists email      text;
+alter table public.profiles add column if not exists full_name  text;
+alter table public.profiles add column if not exists business   text;
+alter table public.profiles add column if not exists phone      text;
+alter table public.profiles add column if not exists role       text not null default 'customer';
+alter table public.profiles add column if not exists created_at timestamptz not null default now();
+
 -- ---------- PRODUCTS ----------
 create table if not exists public.products (
   id              uuid primary key default gen_random_uuid(),
@@ -31,6 +40,17 @@ create table if not exists public.products (
   created_at      timestamptz not null default now()
 );
 
+-- Align an existing products table with the app (no-ops on a fresh table).
+alter table public.products add column if not exists brand           text;
+alter table public.products add column if not exists description     text;
+alter table public.products add column if not exists retail_price    numeric not null default 0;
+alter table public.products add column if not exists wholesale_price numeric not null default 0;
+alter table public.products add column if not exists moq             integer not null default 1;
+alter table public.products add column if not exists stock           integer not null default 0;
+alter table public.products add column if not exists emoji           text default '📦';
+alter table public.products add column if not exists active          boolean not null default true;
+alter table public.products add column if not exists created_at      timestamptz not null default now();
+
 -- ---------- ORDERS ----------
 create table if not exists public.orders (
   id            uuid primary key default gen_random_uuid(),
@@ -46,6 +66,19 @@ create table if not exists public.orders (
   status        text not null default 'pending', -- pending|confirmed|shipped|delivered|cancelled
   created_at    timestamptz not null default now()
 );
+
+-- Align an existing orders table with the app (no-ops on a fresh table).
+alter table public.orders add column if not exists ref           text;
+alter table public.orders add column if not exists user_id       uuid references auth.users(id) on delete set null;
+alter table public.orders add column if not exists customer_name text;
+alter table public.orders add column if not exists business      text;
+alter table public.orders add column if not exists phone         text;
+alter table public.orders add column if not exists email         text;
+alter table public.orders add column if not exists address       text;
+alter table public.orders add column if not exists items         jsonb not null default '[]'::jsonb;
+alter table public.orders add column if not exists total         numeric not null default 0;
+alter table public.orders add column if not exists status        text not null default 'pending';
+alter table public.orders add column if not exists created_at    timestamptz not null default now();
 
 -- ---------- ADMIN HELPER (security definer avoids RLS recursion) ----------
 create or replace function public.is_admin()

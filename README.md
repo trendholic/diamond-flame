@@ -28,10 +28,15 @@ supabase/schema.sql     tables, RLS policies, triggers, seed catalogue
 ## 2. Become an admin
 
 1. Open the live site and **Create dealer account** (or use the Sign in modal).
-2. Back in Supabase **SQL Editor**, run (with your email):
+2. Back in Supabase **SQL Editor**, run (with your email). This joins
+   `auth.users`, so it works even if an older `profiles` table is missing an
+   `email` column:
 
    ```sql
-   update public.profiles set role = 'admin' where email = 'you@example.com';
+   update public.profiles p
+   set    role = 'admin'
+   from   auth.users u
+   where  p.id = u.id and u.email = 'you@example.com';
    ```
 
 3. Open `admin.html`, sign in — you now have the dashboard.
