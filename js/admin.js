@@ -167,45 +167,46 @@
   }
 
   function openProduct(id) {
-    var f = el("productForm");
-    f.reset();
+    var form = el("productForm");
+    form.reset();
+    var f = form.elements; // use .elements: "id"/"name" collide with form properties
     var p = id ? findProduct(id) : null;
     el("productModalTitle").textContent = p ? "Edit product" : "Add product";
-    f.id.value = p ? p.id : "";
+    f["id"].value = p ? p.id : "";
     if (p) {
-      f.name.value = p.name || "";
-      f.brand.value = p.brand || "";
-      f.category.value = p.category || "";
-      f.description.value = p.description || "";
-      f.retail_price.value = p.retail_price;
-      f.wholesale_price.value = p.wholesale_price;
-      f.moq.value = p.moq;
-      f.stock.value = p.stock;
-      f.emoji.value = p.emoji || "📦";
-      f.active.checked = !!p.active;
+      f["name"].value = p.name || "";
+      f["brand"].value = p.brand || "";
+      f["category"].value = p.category || "";
+      f["description"].value = p.description || "";
+      f["retail_price"].value = p.retail_price;
+      f["wholesale_price"].value = p.wholesale_price;
+      f["moq"].value = p.moq;
+      f["stock"].value = p.stock;
+      f["emoji"].value = p.emoji || "📦";
+      f["active"].checked = !!p.active;
     } else {
-      f.emoji.value = "📦";
-      f.active.checked = true;
+      f["emoji"].value = "📦";
+      f["active"].checked = true;
     }
     el("productOverlay").classList.add("open");
   }
 
   function saveProduct(e) {
     e.preventDefault();
-    var f = e.target;
+    var f = e.target.elements; // use .elements: "id"/"name" collide with form properties
     var payload = {
-      name: f.name.value.trim(),
-      brand: f.brand.value.trim(),
-      category: f.category.value.trim(),
-      description: f.description.value.trim(),
-      retail_price: Number(f.retail_price.value),
-      wholesale_price: Number(f.wholesale_price.value),
-      moq: Math.max(1, parseInt(f.moq.value, 10) || 1),
-      stock: Math.max(0, parseInt(f.stock.value, 10) || 0),
-      emoji: f.emoji.value.trim() || "📦",
-      active: f.active.checked
+      name: f["name"].value.trim(),
+      brand: f["brand"].value.trim(),
+      category: f["category"].value.trim(),
+      description: f["description"].value.trim(),
+      retail_price: Number(f["retail_price"].value),
+      wholesale_price: Number(f["wholesale_price"].value),
+      moq: Math.max(1, parseInt(f["moq"].value, 10) || 1),
+      stock: Math.max(0, parseInt(f["stock"].value, 10) || 0),
+      emoji: f["emoji"].value.trim() || "📦",
+      active: f["active"].checked
     };
-    var id = f.id.value;
+    var id = f["id"].value;
     var op = id
       ? db.from("products").update(payload).eq("id", id)
       : db.from("products").insert(payload);
