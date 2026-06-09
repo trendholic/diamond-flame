@@ -178,13 +178,18 @@
       function refresh() {
         var v = sel ? variantByName(p, sel.value) : null;
         priceRow.innerHTML = priceRowHtml(p, v);
-        var old = media.querySelector(".badge"); if (old) old.remove();
+        Array.prototype.forEach.call(media.querySelectorAll(".badge"), function (b) { b.remove(); });
         var st = stockOf(p, v);
         var retail = retailOf(p, v), w = unitPrice(p, v);
         var saving = hasWholesale(p) && retail > w ? Math.round(100 - (w / retail) * 100) : 0;
-        var badge = st <= 0 ? '<span class="badge out">Out of stock</span>'
-          : (saving ? '<span class="badge save">-' + saving + "%</span>" : "");
-        if (badge) media.insertAdjacentHTML("beforeend", badge);
+        var badges = "";
+        if (st <= 0) {
+          badges = '<span class="badge out">Out of stock</span>';
+        } else {
+          if (saving) badges += '<span class="badge save">-' + saving + "%</span>";
+          if (st <= 5) badges += '<span class="badge low">Only ' + st + " left</span>";
+        }
+        if (badges) media.insertAdjacentHTML("beforeend", badges);
         addBtn.disabled = st <= 0;
         addBtn.textContent = st <= 0 ? "Unavailable" : "Add to order";
       }

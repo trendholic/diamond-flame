@@ -3,156 +3,268 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Diamond Flame — Kitchen Sinks, Hobs &amp; Hoods</title>
-  <meta name="description" content="Diamond Flame — kitchen sinks, gas hobs, electric hobs and kitchen hoods. Built-in kitchen fittings, retail and wholesale, delivered across Pakistan." />
+  <title>Diamond Flame — Premium Kitchen Sinks, Hobs &amp; Hoods</title>
+  <meta name="description" content="Diamond Flame crafts premium kitchen sinks, gas &amp; electric hobs and designer hoods. Engineered for performance, built to last — retail &amp; wholesale across Pakistan." />
+  <link rel="canonical" href="https://www.diamond-flame.com/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Diamond Flame — Premium Kitchen Sinks, Hobs &amp; Hoods" />
+  <meta property="og:description" content="Premium kitchen sinks, hobs and hoods. Engineered for performance, built to last." />
+  <meta name="theme-color" content="#0a0c12" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%94%A5%3C/text%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script>document.documentElement.className += " js";</script>
+  <link rel="stylesheet" href="css/premium.css" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Store",
+    "name": "Diamond Flame",
+    "description": "Premium kitchen sinks, gas and electric hobs, and kitchen hoods.",
+    "url": "https://www.diamond-flame.com/",
+    "image": "https://www.diamond-flame.com/og.jpg",
+    "address": { "@type": "PostalAddress", "streetAddress": "Model Town", "addressLocality": "Gujranwala", "addressCountry": "PK" },
+    "priceRange": "Rs",
+    "department": ["Kitchen Sinks", "Gas Hobs", "Electric Hobs", "Kitchen Hoods"]
+  }
+  </script>
 </head>
 <body>
+  <div class="announce">
+    <div class="container announce-row">
+      <span>✦ Free installation guidance</span>
+      <span>✦ 10-year finish warranty</span>
+      <span>✦ Nationwide insured delivery</span>
+    </div>
+  </div>
+
   <header class="site-header" id="top">
     <div class="container header-inner">
-      <a class="brand" href="#top">
+      <a class="brand" href="#top" aria-label="Diamond Flame home">
         <span class="brand-mark">🔥</span>
-        <span class="brand-text"><strong>Diamond Flame</strong><small>Kitchen Sinks · Hobs · Hoods</small></span>
+        <span class="brand-text"><strong>Diamond&nbsp;Flame</strong><small>Premium Kitchen Fittings</small></span>
       </a>
-      <nav class="nav">
-        <a href="#catalogue">Catalogue</a>
-        <a href="#why">Why us</a>
-        <a href="admin.html">Dashboard</a>
+      <nav class="nav" aria-label="Primary">
+        <a href="#collections">Collections</a>
+        <a href="#catalogue">Shop</a>
+        <a href="#why">Craft</a>
+        <a href="#reviews">Reviews</a>
+        <a href="admin.html">Dealer</a>
       </nav>
       <div class="header-actions">
-        <button class="ghost-btn" id="authBtn">Sign in</button>
-        <button class="cart-btn" id="cartBtn" aria-label="Open your order">
-          <span aria-hidden="true">🛒</span><span class="cart-count" id="cartCount">0</span>
+        <button class="icon-btn" id="authBtn" aria-label="Account">Sign in</button>
+        <button class="icon-btn cart-btn magnetic" id="cartBtn" aria-label="Open your order">
+          <span aria-hidden="true">🛍</span><span class="cart-count" id="cartCount">0</span>
         </button>
       </div>
     </div>
   </header>
 
-  <section class="hero">
-    <div class="hero-glow" aria-hidden="true"></div>
+  <!-- HERO -->
+  <section class="hero" data-reveal>
+    <div class="hero-aura" aria-hidden="true"></div>
     <div class="container hero-inner">
       <div class="hero-copy">
-        <p class="eyebrow"><span class="eyebrow-dot"></span> Premium kitchen fittings, made to last</p>
-        <h1>Kitchens that carry a <span class="flame">flame</span> of craftsmanship.</h1>
-        <p class="lead">Stainless steel sinks, gas &amp; electric hobs and powerful kitchen hoods — engineered by Diamond Flame, available retail and wholesale across Pakistan.</p>
+        <span class="pill"><span class="pill-dot"></span> Engineered in Pakistan · Built to last</span>
+        <h1>The kitchen,<br /><span class="grad">perfected.</span></h1>
+        <p class="lead">Premium sinks, gas &amp; electric hobs and designer hoods — precision-built from food-grade steel and tempered glass, for kitchens that perform as beautifully as they look.</p>
         <div class="hero-cta">
-          <a class="btn btn-flame" href="#catalogue">Browse catalogue</a>
-          <a class="btn btn-line" href="#why">Why Diamond Flame</a>
+          <a class="btn btn-primary magnetic" href="#catalogue">Shop the collection</a>
+          <a class="btn btn-ghost magnetic" href="#collections">Explore ranges</a>
         </div>
-        <div class="hero-stats">
-          <div><strong id="statCount">—</strong><span>products</span></div>
-          <div><strong>10yr</strong><span>finish warranty</span></div>
-          <div><strong>48hr</strong><span>nationwide dispatch</span></div>
+        <div class="hero-trust">
+          <div class="stars" aria-hidden="true">★★★★★</div>
+          <span><strong>4.9/5</strong> from 1,200+ kitchens fitted</span>
         </div>
       </div>
-      <div class="hero-art" aria-hidden="true">
-        <div class="art-tile t1"><span class="ai">🪣</span><span class="al">Kitchen Sinks</span></div>
-        <div class="art-tile t2"><span class="ai">🔥</span><span class="al">Gas Hobs</span></div>
-        <div class="art-tile t3"><span class="ai">⚡</span><span class="al">Electric Hobs</span></div>
-        <div class="art-tile t4"><span class="ai">🌀</span><span class="al">Kitchen Hoods</span></div>
-        <div class="art-badge">🔥 Diamond Flame</div>
+      <div class="hero-visual" aria-hidden="true">
+        <div class="glass-card hero-product">
+          <div class="hero-emoji">🔥</div>
+          <div class="hero-spec sp1 glass-chip">Brushed 304 steel</div>
+          <div class="hero-spec sp2 glass-chip">Whisper-quiet motor</div>
+          <div class="hero-spec sp3 glass-chip">Auto-ignition</div>
+        </div>
+        <div class="orb orb-a"></div>
+        <div class="orb orb-b"></div>
       </div>
     </div>
   </section>
 
-  <section class="brands" aria-label="What we make">
+  <!-- TRUST STRIP -->
+  <section class="trust-strip" data-reveal>
+    <div class="container trust-row">
+      <div class="trust-item"><strong id="statCount">—</strong><span>premium products</span></div>
+      <div class="trust-item"><strong>10yr</strong><span>finish warranty</span></div>
+      <div class="trust-item"><strong>48h</strong><span>nationwide dispatch</span></div>
+      <div class="trust-item"><strong>1,200+</strong><span>kitchens fitted</span></div>
+    </div>
+  </section>
+
+  <!-- COLLECTIONS -->
+  <section id="collections" class="collections" data-reveal>
     <div class="container">
-      <p class="brands-label">Everything for the modern kitchen</p>
-      <div class="brand-row">
-        <span>Kitchen Sinks</span><span>Gas Hobs</span><span>Electric Hobs</span>
-        <span>Kitchen Hoods</span><span>Built-in Fittings</span>
+      <div class="sec-head">
+        <span class="eyebrow">Collections</span>
+        <h2>Designed for every surface of the kitchen</h2>
+        <p>Four signature ranges, each engineered to a single standard — excellence.</p>
+      </div>
+      <div class="collection-grid">
+        <a class="collection-card glass-card magnetic" href="#catalogue" data-cat="Kitchen Sinks">
+          <span class="cc-emoji">🪣</span><h3>Kitchen Sinks</h3><p>Brushed &amp; satin 304 steel, single to double bowl.</p><span class="cc-go">Shop →</span>
+        </a>
+        <a class="collection-card glass-card magnetic" href="#catalogue" data-cat="Gas Hobs">
+          <span class="cc-emoji">🔥</span><h3>Gas Hobs</h3><p>Tempered glass &amp; steel, 3 to 5 brass burners.</p><span class="cc-go">Shop →</span>
+        </a>
+        <a class="collection-card glass-card magnetic" href="#catalogue" data-cat="Electric Hobs">
+          <span class="cc-emoji">⚡</span><h3>Electric Hobs</h3><p>Frameless ceramic, touch control, residual-heat safety.</p><span class="cc-go">Shop →</span>
+        </a>
+        <a class="collection-card glass-card magnetic" href="#catalogue" data-cat="Kitchen Hoods">
+          <span class="cc-emoji">🌀</span><h3>Kitchen Hoods</h3><p>Auto-clean chimneys, up to 1200 m³/h suction.</p><span class="cc-go">Shop →</span>
+        </a>
       </div>
     </div>
   </section>
 
-  <div class="container">
-    <div class="backend-banner" id="backendBanner" hidden>
-      ⚠️ Backend not connected. Add your Supabase URL &amp; anon key in <code>js/config.js</code>.
-    </div>
-  </div>
-
+  <!-- CATALOGUE -->
   <main>
-    <section id="catalogue" class="catalogue">
+    <section id="catalogue" class="catalogue" data-reveal>
       <div class="container">
-        <div class="section-head">
-          <h2>Catalogue</h2>
-          <input class="search" id="search" type="search" placeholder="Search sinks, hobs, hoods…" />
+        <div class="sec-head">
+          <span class="eyebrow">The collection</span>
+          <h2>Shop premium kitchen fittings</h2>
+        </div>
+        <div class="catalogue-controls">
+          <input class="search" id="search" type="search" placeholder="Search sinks, hobs, hoods…" aria-label="Search products" />
+          <div class="filters" id="filters"></div>
         </div>
         <p class="dealer-hint" id="dealerHint"></p>
-        <div class="filters" id="filters"></div>
-        <div class="grid" id="productGrid">
-          <p class="loading" id="gridLoading">Loading catalogue…</p>
+        <div class="backend-banner" id="backendBanner" hidden>
+          ⚠️ Backend not connected. Add your Supabase URL &amp; anon key in <code>js/config.js</code>.
         </div>
-      </div>
-    </section>
-
-    <section id="why" class="why">
-      <div class="container why-inner">
-        <div class="why-card"><span>🛡️</span><h3>Built to last</h3><p>Food-grade 304 stainless steel and tempered glass, backed by a 10-year finish warranty.</p></div>
-        <div class="why-card"><span>🏷️</span><h3>Retail &amp; wholesale</h3><p>Fair retail pricing for homeowners and tiered wholesale rates for approved dealers.</p></div>
-        <div class="why-card"><span>🚚</span><h3>Nationwide dispatch</h3><p>Insured delivery to every major city within 48 hours of confirmation.</p></div>
-        <div class="why-card"><span>🛠️</span><h3>Fitting &amp; support</h3><p>Installation guidance and responsive after-sales care on every product.</p></div>
+        <div class="grid" id="productGrid">
+          <p class="loading" id="gridLoading">Loading collection…</p>
+        </div>
       </div>
     </section>
   </main>
 
-  <section class="cta-band">
-    <div class="container cta-inner">
-      <div class="cta-text">
-        <h2>Become a verified dealer</h2>
-        <p>Unlock wholesale pricing, priority dispatch and flexible credit terms — approval within 24 hours.</p>
+  <!-- WHY / CRAFT -->
+  <section id="why" class="why" data-reveal>
+    <div class="container">
+      <div class="sec-head">
+        <span class="eyebrow">The Diamond Flame standard</span>
+        <h2>Why premium kitchens choose us</h2>
       </div>
-      <button class="btn btn-flame" id="ctaJoin">Apply for a dealer account</button>
+      <div class="why-grid">
+        <div class="why-card glass-card"><span>💎</span><h3>Premium quality</h3><p>Food-grade 304 steel and tempered glass, finished to a flawless standard.</p></div>
+        <div class="why-card glass-card"><span>⚙️</span><h3>Modern innovation</h3><p>Auto-ignition, touch controls and auto-clean engineering as standard.</p></div>
+        <div class="why-card glass-card"><span>🛡️</span><h3>Reliability</h3><p>Built and tested for a decade of daily use, backed by warranty.</p></div>
+        <div class="why-card glass-card"><span>🌱</span><h3>Energy efficient</h3><p>Optimised burners and motors that do more with less.</p></div>
+        <div class="why-card glass-card"><span>📲</span><h3>Smart living</h3><p>Intuitive controls designed around the way you actually cook.</p></div>
+        <div class="why-card glass-card"><span>🤝</span><h3>Customer first</h3><p>Installation guidance and responsive after-sales care, always.</p></div>
+      </div>
     </div>
   </section>
 
-  <footer class="site-footer">
+  <!-- STORY BAND -->
+  <section class="story" data-reveal>
+    <div class="container story-inner">
+      <div class="story-visual glass-card"><span>🔥</span></div>
+      <div class="story-copy">
+        <span class="eyebrow">Crafted, not assembled</span>
+        <h2>A flame of craftsmanship in every detail</h2>
+        <p>From the radius of a sink corner to the click of an auto-ignition, every Diamond Flame product is obsessed over. We don't ship anything we wouldn't fit in our own homes.</p>
+        <ul class="story-list">
+          <li>Hand-finished, fingerprint-resistant surfaces</li>
+          <li>Brass burners &amp; flame-failure safety</li>
+          <li>Whisper-quiet, high-suction extraction</li>
+        </ul>
+        <a class="btn btn-primary magnetic" href="#catalogue">Discover the range</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- REVIEWS -->
+  <section id="reviews" class="reviews" data-reveal>
+    <div class="container">
+      <div class="sec-head">
+        <span class="eyebrow">Loved by home cooks</span>
+        <h2>What our customers say</h2>
+      </div>
+      <div class="review-grid">
+        <figure class="review-card glass-card">
+          <div class="stars">★★★★★</div>
+          <blockquote>“The double-bowl sink is built like a tank and looks stunning. Fitting was effortless.”</blockquote>
+          <figcaption><span class="avatar">AK</span> Ayesha K. · Lahore</figcaption>
+        </figure>
+        <figure class="review-card glass-card">
+          <div class="stars">★★★★★</div>
+          <blockquote>“Best hob I've owned — the brass burners are seriously powerful and the glass wipes clean.”</blockquote>
+          <figcaption><span class="avatar">MR</span> Mizan R. · Gujranwala</figcaption>
+        </figure>
+        <figure class="review-card glass-card">
+          <div class="stars">★★★★★</div>
+          <blockquote>“The chimney is whisper quiet yet clears smoke instantly. Premium quality for the price.”</blockquote>
+          <figcaption><span class="avatar">SF</span> Sana F. · Islamabad</figcaption>
+        </figure>
+      </div>
+      <div class="awards">
+        <span>🏅 Quality Certified</span><span>✅ ISO Materials</span><span>♻️ Energy Optimised</span><span>🛡️ 10-Year Warranty</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- DEALER CTA -->
+  <section class="cta-band" data-reveal>
+    <div class="container cta-inner glass-card">
+      <div class="cta-text">
+        <h2>Become a verified dealer</h2>
+        <p>Unlock wholesale pricing, priority dispatch and credit terms — approval within 24 hours.</p>
+      </div>
+      <button class="btn btn-primary magnetic" id="ctaJoin">Apply for a dealer account</button>
+    </div>
+  </section>
+
+  <footer class="site-footer" id="contact">
     <div class="container footer-inner">
       <div class="footer-col footer-about">
-        <span class="brand-text footer-brand"><strong>🔥 Diamond Flame</strong><small>Kitchen Sinks · Hobs · Hoods</small></span>
+        <span class="brand-text footer-brand"><strong>🔥 Diamond Flame</strong><small>Premium Kitchen Fittings</small></span>
         <p>Kitchen sinks, hobs and hoods — crafted by Diamond Flame, retail &amp; wholesale across Pakistan.</p>
       </div>
-      <div class="footer-col">
-        <h4>Shop</h4>
-        <a href="#catalogue">Catalogue</a>
-        <a href="#why">Why us</a>
-        <a href="admin.html">Dealer dashboard</a>
+      <div class="footer-col"><h4>Shop</h4>
+        <a href="#collections">Collections</a><a href="#catalogue">All products</a><a href="#why">Our craft</a><a href="admin.html">Dealer dashboard</a>
       </div>
-      <div class="footer-col">
-        <h4>Contact</h4>
-        <p><a href="mailto:sales@diamond-flame.com">sales@diamond-flame.com</a></p>
-        <p>Mon–Sat · 10am–7pm PKT</p>
+      <div class="footer-col"><h4>Contact</h4>
+        <p><a href="mailto:sales@diamond-flame.com">sales@diamond-flame.com</a></p><p>Mon–Sat · 10am–7pm PKT</p>
       </div>
-      <div class="footer-col">
-        <h4>Showroom</h4>
+      <div class="footer-col"><h4>Showroom</h4>
         <p>Model Town,<br />Gujranwala, Pakistan</p>
       </div>
     </div>
     <div class="container copyright">© <span id="year"></span> Diamond Flame. All rights reserved.</div>
   </footer>
 
-  <!-- Cart / bulk order drawer -->
+  <!-- Floating order bar -->
+  <button class="float-cart" id="floatCart" hidden>
+    <span class="fc-dot"></span> View your order
+  </button>
+
+  <!-- Cart drawer -->
   <div class="overlay" id="drawerOverlay"></div>
   <aside class="drawer" id="cartDrawer" aria-hidden="true">
-    <div class="drawer-head">
-      <h3>Your order</h3>
-      <button class="x" id="closeCart" aria-label="Close">✕</button>
-    </div>
+    <div class="drawer-head"><h3>Your order</h3><button class="x" id="closeCart" aria-label="Close">✕</button></div>
     <div class="drawer-body" id="cartItems"></div>
     <div class="drawer-foot">
       <div class="row total"><span>Order total</span><strong id="cartTotal">Rs 0</strong></div>
-      <button class="btn btn-flame full" id="checkoutBtn">Place order</button>
-      <p class="muted-note">Dealer prices &amp; MOQ apply once you're signed in as a dealer.</p>
+      <button class="btn btn-primary full magnetic" id="checkoutBtn">Checkout</button>
+      <p class="muted-note">🔒 Secure order · Dealer pricing applies when signed in</p>
     </div>
   </aside>
 
   <!-- Auth modal -->
   <div class="overlay modal-overlay" id="authOverlay">
-    <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal glass-card" role="dialog" aria-modal="true">
       <button class="x modal-x" id="closeAuth" aria-label="Close">✕</button>
       <div class="auth-head">
         <span class="auth-mark">🔥</span>
@@ -166,7 +278,7 @@
       <form id="loginForm" class="auth-form">
         <label>Email<input name="email" type="email" required autocomplete="email" /></label>
         <label>Password<input name="password" type="password" required autocomplete="current-password" /></label>
-        <button class="btn btn-flame full" type="submit">Sign in</button>
+        <button class="btn btn-primary full" type="submit">Sign in</button>
         <p class="auth-switch">New to Diamond Flame? <button type="button" class="link-inline" data-goto="signup">Create an account</button></p>
       </form>
       <form id="signupForm" class="auth-form" hidden>
@@ -178,18 +290,14 @@
         <label>Email<input name="email" type="email" required autocomplete="email" /></label>
         <label>Password<input name="password" type="password" required minlength="6" autocomplete="new-password" /></label>
         <label class="check"><input name="dealer_apply" id="dealerApply" type="checkbox" /> <span>Apply for a dealer account — wholesale pricing, admin-approved</span></label>
-
         <div class="dealer-fields" id="dealerFields" hidden>
           <div class="dealer-fields-head">Dealer verification <span>for wholesale approval</span></div>
           <label>WhatsApp number<input name="whatsapp" inputmode="tel" placeholder="+92 3xx xxxxxxx" /></label>
-          <label>Shop card <small>(visiting / registration card)</small>
-            <input name="shop_card" type="file" accept="image/*" class="file" /></label>
-          <label>Shop photos <small>(up to 3)</small>
-            <input name="shop_photos" type="file" accept="image/*" multiple class="file" /></label>
+          <label>Shop card <small>(visiting / registration card)</small><input name="shop_card" type="file" accept="image/*" class="file" /></label>
+          <label>Shop photos <small>(up to 3)</small><input name="shop_photos" type="file" accept="image/*" multiple class="file" /></label>
           <p class="dealer-note">An admin reviews these before approving wholesale access.</p>
         </div>
-
-        <button class="btn btn-flame full" type="submit">Create account</button>
+        <button class="btn btn-primary full" type="submit">Create account</button>
         <p class="auth-switch">Already have an account? <button type="button" class="link-inline" data-goto="login">Sign in</button></p>
       </form>
     </div>
@@ -197,7 +305,7 @@
 
   <!-- Checkout modal -->
   <div class="overlay modal-overlay" id="checkoutOverlay">
-    <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal glass-card" role="dialog" aria-modal="true">
       <button class="x modal-x" id="closeCheckout" aria-label="Close">✕</button>
       <div id="checkoutForm">
         <h3>Confirm your order</h3>
@@ -208,21 +316,23 @@
           <label>Email<input name="email" type="email" autocomplete="email" /></label>
           <label>Delivery address<textarea name="address" required rows="3"></textarea></label>
           <div class="order-summary" id="orderSummary"></div>
-          <button class="btn btn-flame full" type="submit">Submit order</button>
+          <button class="btn btn-primary full" type="submit">Place order</button>
+          <p class="trust-line">🔒 Secure &amp; encrypted · Cash on delivery available</p>
         </form>
       </div>
       <div id="checkoutDone" class="done" hidden>
         <span class="done-mark">✓</span>
         <h3>Order received</h3>
         <p id="doneMsg"></p>
-        <button class="btn btn-flame" id="doneClose">Done</button>
+        <button class="btn btn-primary" id="doneClose">Done</button>
       </div>
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/config.js"></script>
-  <script src="js/core.js"></script>
-  <script src="js/store.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="js/config.js" defer></script>
+  <script src="js/core.js" defer></script>
+  <script src="js/store.js" defer></script>
+  <script src="js/premium.js" defer></script>
 </body>
 </html>
