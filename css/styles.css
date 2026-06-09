@@ -170,19 +170,27 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.88em}
   transform:scale(.96);opacity:0;transition:transform .25s,opacity .25s}
 .modal-overlay.open .modal{transform:scale(1);opacity:1}
 .modal h3{font-size:22px;margin-bottom:16px}
-.modal-x{position:absolute;top:16px;right:18px}
-.tabs{display:flex;gap:8px;margin-bottom:18px}
-.tab{flex:1;background:var(--panel-2);border:1px solid var(--line);color:var(--muted);border-radius:10px;
-  padding:10px;font:inherit;font-size:13px;cursor:pointer;transition:all .2s}
-.tab.active{border-color:var(--flame);color:var(--ink)}
+.modal-x{position:absolute;top:14px;right:16px;z-index:2}
+.auth-head{text-align:center;margin-bottom:18px}
+.auth-mark{font-size:30px;filter:drop-shadow(0 0 12px rgba(255,106,44,.6))}
+.auth-head h3{font-size:23px;margin:10px 0 4px}
+.auth-sub{color:var(--muted);font-size:13.5px;margin:0}
+/* segmented sign-in / sign-up toggle */
+.seg{display:flex;gap:4px;background:#10121a;border:1px solid var(--line);border-radius:30px;padding:4px;margin-bottom:18px}
+.tab{flex:1;background:none;border:none;color:var(--muted);border-radius:24px;
+  padding:10px;font:inherit;font-size:13.5px;font-weight:500;cursor:pointer;transition:all .2s}
+.tab:hover{color:var(--ink)}
+.tab.active{background:linear-gradient(135deg,var(--ember),var(--flame));color:#fff;font-weight:600;
+  box-shadow:0 4px 14px rgba(255,106,44,.32)}
 .auth-form{display:grid;gap:13px}
 .auth-form label{display:grid;gap:6px;font-size:13px;color:var(--muted)}
 .auth-form .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .auth-form input,.auth-form textarea{background:#10121a;border:1px solid var(--line);border-radius:10px;
   padding:11px 13px;color:var(--ink);font:inherit;font-size:14px;resize:vertical;width:100%}
 .auth-form input:focus,.auth-form textarea:focus{outline:none;border-color:var(--flame)}
-.auth-form .check{flex-direction:row;align-items:center;gap:8px;color:var(--ink)}
-.auth-form .check input{width:auto}
+.auth-form .check{display:flex;flex-direction:row;align-items:flex-start;gap:9px;color:var(--ink);
+  font-size:13px;line-height:1.4;background:#10121a;border:1px solid var(--line);border-radius:10px;padding:11px 13px;cursor:pointer}
+.auth-form .check input{width:auto;margin-top:2px;flex:none;accent-color:var(--flame)}
 .margins{background:#10121a;border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:13px}
 .m-row{display:flex;justify-content:space-between;padding:4px 0;color:var(--muted)}
 .m-row strong{font-weight:600}

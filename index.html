@@ -110,9 +110,14 @@
   <div class="overlay modal-overlay" id="authOverlay">
     <div class="modal" role="dialog" aria-modal="true">
       <button class="x modal-x" id="closeAuth" aria-label="Close">✕</button>
-      <div class="tabs">
+      <div class="auth-head">
+        <span class="auth-mark">🔥</span>
+        <h3>Welcome to Diamond Flame</h3>
+        <p class="auth-sub">Sign in, or create a dealer account for wholesale pricing.</p>
+      </div>
+      <div class="seg" role="tablist">
         <button class="tab active" data-tab="login">Sign in</button>
-        <button class="tab" data-tab="signup">Create dealer account</button>
+        <button class="tab" data-tab="signup">Create account</button>
       </div>
       <form id="loginForm" class="auth-form">
         <label>Email<input name="email" type="email" required autocomplete="email" /></label>
@@ -121,11 +126,13 @@
       </form>
       <form id="signupForm" class="auth-form" hidden>
         <label>Business / shop name<input name="business" required /></label>
-        <label>Full name<input name="full_name" required autocomplete="name" /></label>
-        <label>Phone<input name="phone" required inputmode="tel" autocomplete="tel" /></label>
+        <div class="two">
+          <label>Full name<input name="full_name" required autocomplete="name" /></label>
+          <label>Phone<input name="phone" required inputmode="tel" autocomplete="tel" /></label>
+        </div>
         <label>Email<input name="email" type="email" required autocomplete="email" /></label>
         <label>Password<input name="password" type="password" required minlength="6" autocomplete="new-password" /></label>
-        <label class="check"><input name="dealer_apply" type="checkbox" /> Apply for a dealer account (wholesale pricing, admin-approved)</label>
+        <label class="check"><input name="dealer_apply" type="checkbox" /> <span>Apply for a dealer account — wholesale pricing, admin-approved</span></label>
         <button class="btn btn-flame full" type="submit">Create account</button>
       </form>
     </div>
