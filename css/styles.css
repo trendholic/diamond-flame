@@ -194,6 +194,10 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.88em}
   font-size:13px;line-height:1.4;background:#10121a;border:1px solid var(--line);border-radius:10px;padding:11px 13px;cursor:pointer}
 .auth-form .check input{width:auto;margin-top:2px;flex:none;accent-color:var(--flame)}
 .auth-form label small{color:var(--muted);font-weight:400}
+.auth-switch{text-align:center;color:var(--muted);font-size:13px;margin:2px 0 0}
+.link-inline{background:none;border:none;color:var(--flame-2);font:inherit;font-size:13px;
+  font-weight:600;cursor:pointer;padding:0;text-decoration:underline}
+.link-inline:hover{color:var(--flame)}
 /* dealer verification section (revealed when applying as a dealer) */
 .dealer-fields{display:grid;gap:13px;border:1px solid var(--line-2);border-radius:12px;
   padding:14px;background:rgba(255,106,44,.05)}

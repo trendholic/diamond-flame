@@ -208,16 +208,23 @@
   /* ---------- drawers & modals ---------- */
   function openCart() { el("cartDrawer").classList.add("open"); el("drawerOverlay").classList.add("open"); }
   function closeCart() { el("cartDrawer").classList.remove("open"); el("drawerOverlay").classList.remove("open"); }
-  function openAuth() {
-    // Always open on the Sign-in tab in a clean state.
+  // Single source of truth for which auth form is shown.
+  function setAuthMode(mode) {
+    var isLogin = mode !== "signup";
     Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (t) {
-      t.classList.toggle("active", t.getAttribute("data-tab") === "login");
+      t.classList.toggle("active", t.getAttribute("data-tab") === (isLogin ? "login" : "signup"));
     });
-    el("loginForm").hidden = false;
-    el("signupForm").hidden = true;
-    el("dealerFields").hidden = true;
-    el("authTitle").textContent = "Welcome back";
-    el("authSub").textContent = "Sign in to see your pricing and track your orders.";
+    el("loginForm").hidden = !isLogin;
+    el("signupForm").hidden = isLogin;
+    if (isLogin) el("dealerFields").hidden = true;
+    el("authTitle").textContent = isLogin ? "Welcome back" : "Create your account";
+    el("authSub").textContent = isLogin
+      ? "Sign in to see your pricing and track your orders."
+      : "Set up your shop account — apply as a dealer for wholesale rates.";
+  }
+
+  function openAuth() {
+    setAuthMode("login");
     el("authOverlay").classList.add("open");
   }
   function closeAuth() { el("authOverlay").classList.remove("open"); }
@@ -409,17 +416,11 @@
     el("loginForm").addEventListener("submit", handleLogin);
     el("signupForm").addEventListener("submit", handleSignup);
     Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (tab) {
-      tab.addEventListener("click", function () {
-        Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (t) { t.classList.remove("active"); });
-        tab.classList.add("active");
-        var isLogin = tab.getAttribute("data-tab") === "login";
-        el("loginForm").hidden = !isLogin;
-        el("signupForm").hidden = isLogin;
-        el("authTitle").textContent = isLogin ? "Welcome back" : "Create your account";
-        el("authSub").textContent = isLogin
-          ? "Sign in to see your pricing and track your orders."
-          : "Set up your shop account — apply as a dealer for wholesale rates.";
-      });
+      tab.addEventListener("click", function () { setAuthMode(tab.getAttribute("data-tab")); });
+    });
+    // "Create an account" / "Sign in" switch links inside each form.
+    Array.prototype.forEach.call(document.querySelectorAll("[data-goto]"), function (link) {
+      link.addEventListener("click", function () { setAuthMode(link.getAttribute("data-goto")); });
     });
 
     // Reveal dealer verification fields only when applying as a dealer.
