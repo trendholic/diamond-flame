@@ -7,6 +7,10 @@ window.DF_CONFIG = {
   SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ3c2Zhb3RwZGh6bnNwdWVha3plIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5NTcyMTksImV4cCI6MjA5NjUzMzIxOX0.92igfOS3aEhWxItKrpem0NrYd9K3fYwJLkKe9wisuL4",
   CURRENCY: "Rs",
   WHATSAPP: "923030042020", // full intl number (no +) for the WhatsApp button & documents
+  // Optional: a server endpoint that proxies an LLM (keeps the API key server-side).
+  // It should accept POST {message} and return JSON {reply}. Leave "" to use the
+  // built-in assistant only.
+  AI_ENDPOINT: "",
   // Bank details shown to customers who choose "Bank Transfer" — edit these.
   BANK: {
     bank: "Meezan Bank",

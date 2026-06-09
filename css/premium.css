@@ -461,3 +461,41 @@ body.pd-open{overflow:hidden}
   transition:transform .2s,box-shadow .2s}
 .wa-fab:hover{transform:scale(1.07);box-shadow:0 16px 38px rgba(37,211,102,.55)}
 @media(max-width:720px){.wa-fab{width:52px;height:52px;left:16px;bottom:16px}}
+
+/* ============ ASSISTANT CHAT WIDGET ============ */
+.cw-fab{position:fixed;right:22px;bottom:22px;z-index:57;width:60px;height:60px;border-radius:50%;border:none;cursor:pointer;
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;font-size:26px;box-shadow:0 14px 34px rgba(47,107,255,.45);
+  transition:transform .2s,box-shadow .2s}
+.cw-fab:hover{transform:scale(1.07)}
+.cw-fab.open{transform:scale(.9);opacity:.85}
+.cw-panel{position:fixed;right:22px;bottom:94px;z-index:57;width:370px;max-width:calc(100vw - 32px);height:520px;max-height:calc(100vh - 130px);
+  background:#fff;border:1px solid var(--silver);border-radius:20px;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;overflow:hidden}
+.cw-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;color:#fff;
+  background:linear-gradient(135deg,var(--accent),var(--accent-2))}
+.cw-head strong{font-family:'Sora',sans-serif;font-size:15px;display:block}
+.cw-head small{font-size:11.5px;opacity:.85}
+.cw-x{background:rgba(255,255,255,.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:13px}
+.cw-body{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;background:var(--bg-2)}
+.cw-msg{max-width:84%;padding:10px 13px;border-radius:14px;font-size:14px;line-height:1.5;animation:cwIn .25s ease}
+@keyframes cwIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.cw-bot{align-self:flex-start;background:#fff;border:1px solid var(--silver);border-bottom-left-radius:4px;color:var(--ink)}
+.cw-user{align-self:flex-end;background:var(--accent);color:#fff;border-bottom-right-radius:4px}
+.cw-bot b{color:var(--ink)}
+.cw-wa{display:inline-block;margin-top:6px;background:#25d366;color:#fff;padding:7px 13px;border-radius:20px;font-size:12.5px;font-weight:600}
+.cw-prods{display:grid;gap:8px;margin-top:8px}
+.cw-prod{display:flex;align-items:center;gap:10px;background:var(--bg-2);border:1px solid var(--silver);border-radius:12px;padding:8px;color:var(--ink)}
+.cw-prod img,.cw-prod .cw-emoji{width:42px;height:42px;border-radius:8px;object-fit:cover;display:grid;place-items:center;font-size:22px;background:#eef1f6;flex:none}
+.cw-prod small{display:block;color:var(--muted);font-size:12px}
+.cw-chips{display:flex;gap:7px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid var(--silver);background:#fff}
+.cw-chip{background:#fff;border:1px solid var(--silver);color:var(--accent-ink);border-radius:30px;padding:7px 13px;font:inherit;font-size:12.5px;cursor:pointer;transition:all .2s}
+.cw-chip:hover{border-color:var(--accent);background:rgba(47,107,255,.06)}
+.cw-input{display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--silver);background:#fff}
+.cw-input input{flex:1;border:1px solid var(--silver);border-radius:30px;padding:11px 15px;font:inherit;font-size:14px}
+.cw-input input:focus{outline:none;border-color:var(--accent)}
+.cw-input button{width:42px;height:42px;border:none;border-radius:50%;background:var(--accent);color:#fff;font-size:15px;cursor:pointer;flex:none}
+.cw-typing{letter-spacing:2px;animation:cwBlink 1s infinite}
+@keyframes cwBlink{50%{opacity:.3}}
+@media(max-width:720px){
+  .cw-panel{right:12px;left:12px;width:auto;bottom:84px;height:70vh}
+  .cw-fab{right:16px;bottom:16px;width:54px;height:54px}
+}
