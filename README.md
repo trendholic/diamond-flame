@@ -56,6 +56,25 @@ python3 -m http.server 8000
 # dashboard   http://localhost:8000/admin.html
 ```
 
+## Pricing tiers
+
+Three prices per product, all managed in the dashboard product form:
+
+| Price | Visible to | Notes |
+|-------|------------|-------|
+| **Retail** | everyone (public) | the regular customer price |
+| **Wholesale** | dealers + admins | requires sign-in with a `dealer` role |
+| **Landing / cost** | admins only | never sent to the browser for anyone else |
+
+Visibility is enforced in the database by the `catalogue()` security-definer
+RPC (see `supabase/schema.sql`), which returns `NULL` for prices the caller
+isn't allowed to see — so it's not just hidden in the UI. The dashboard product
+form shows **live profit margins** as you type. Approve a dealer from
+**Dashboard → Customers → role dropdown** (or `update public.profiles set role
+= 'dealer' where email = '…'`).
+
+If you set the project up before this feature, run `supabase/migration-pricing.sql` once.
+
 ## Security notes
 
 - The anon key is meant to be public; all access is gated by **RLS** in

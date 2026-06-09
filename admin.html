@@ -95,10 +95,15 @@
           <label>Category<input name="category" required /></label>
         </div>
         <label>Description<textarea name="description" rows="2"></textarea></label>
+        <label>Retail price — shown to everyone (Rs)
+          <input name="retail_price" type="number" min="0" step="1" required /></label>
         <div class="two">
-          <label>Retail price (Rs)<input name="retail_price" type="number" min="0" step="1" required /></label>
-          <label>Wholesale price (Rs)<input name="wholesale_price" type="number" min="0" step="1" required /></label>
+          <label>Wholesale price — dealers only (Rs)
+            <input name="wholesale_price" type="number" min="0" step="1" required /></label>
+          <label>Landing / cost price — admin only (Rs)
+            <input name="cost_price" type="number" min="0" step="1" value="0" required /></label>
         </div>
+        <div class="margins" id="marginReadout"></div>
         <div class="two">
           <label>MOQ<input name="moq" type="number" min="1" step="1" value="1" required /></label>
           <label>Stock<input name="stock" type="number" min="0" step="1" value="0" required /></label>

@@ -31,8 +31,9 @@ create table if not exists public.products (
   brand           text,
   category        text not null,
   description     text,
-  retail_price    numeric not null default 0,   -- PKR
-  wholesale_price numeric not null default 0,   -- PKR (per unit, bulk)
+  retail_price    numeric not null default 0,   -- PKR, shown to everyone
+  wholesale_price numeric not null default 0,   -- PKR, dealers only
+  cost_price      numeric not null default 0,   -- PKR, landing/cost, admin only
   moq             integer not null default 1,   -- minimum order quantity
   stock           integer not null default 0,
   emoji           text default '📦',
@@ -45,6 +46,7 @@ alter table public.products add column if not exists brand           text;
 alter table public.products add column if not exists description     text;
 alter table public.products add column if not exists retail_price    numeric not null default 0;
 alter table public.products add column if not exists wholesale_price numeric not null default 0;
+alter table public.products add column if not exists cost_price      numeric not null default 0;
 alter table public.products add column if not exists moq             integer not null default 1;
 alter table public.products add column if not exists stock           integer not null default 0;
 alter table public.products add column if not exists emoji           text default '📦';
@@ -94,6 +96,35 @@ as $$
   );
 $$;
 
+-- Caller's role ('anon' when signed out) — drives three-tier pricing.
+create or replace function public.viewer_role()
+returns text
+language sql stable security definer set search_path = public
+as $$
+  select coalesce((select role from public.profiles where id = auth.uid()), 'anon');
+$$;
+
+-- Public catalogue API: returns only the prices the caller may see.
+create or replace function public.catalogue()
+returns table (
+  id uuid, name text, brand text, category text, description text,
+  emoji text, moq integer, stock integer,
+  retail_price numeric, wholesale_price numeric, cost_price numeric
+)
+language sql stable security definer set search_path = public
+as $$
+  select p.id, p.name, p.brand, p.category, p.description, p.emoji, p.moq, p.stock,
+         p.retail_price,
+         case when public.viewer_role() in ('dealer','admin') then p.wholesale_price end,
+         case when public.viewer_role() = 'admin' then p.cost_price end
+  from   public.products p
+  where  p.active = true
+  order  by p.category, p.name;
+$$;
+
+grant execute on function public.viewer_role() to anon, authenticated;
+grant execute on function public.catalogue()   to anon, authenticated;
+
 -- ---------- AUTO-CREATE PROFILE ON SIGNUP ----------
 create or replace function public.handle_new_user()
 returns trigger
@@ -141,11 +172,13 @@ create policy profiles_update_own on public.profiles
 create policy profiles_admin_all on public.profiles
   for all using (public.is_admin()) with check (public.is_admin());
 
--- products: anyone may read active catalogue; only admins write
+-- products: only admins read the raw table directly (protects wholesale & cost);
+-- everyone else reads via catalogue(), which filters columns by role.
 drop policy if exists products_public_read on public.products;
+drop policy if exists products_admin_read  on public.products;
 drop policy if exists products_admin_write on public.products;
-create policy products_public_read on public.products
-  for select using (true);
+create policy products_admin_read on public.products
+  for select using (public.is_admin());
 create policy products_admin_write on public.products
   for all using (public.is_admin()) with check (public.is_admin());
 
@@ -189,6 +222,11 @@ select * from (values
   ('Microwave + Air Fryer Combo',    'Haier',     'Kitchen',          'Convection microwave with air-fry basket, 25L.',                                  42000,  36000,   5,  30, '🍳')
 ) as seed(name, brand, category, description, retail_price, wholesale_price, moq, stock, emoji)
 where not exists (select 1 from public.products);
+
+-- Seed a landing/cost price (~88% of wholesale) so margins show immediately.
+update public.products
+set    cost_price = round(wholesale_price * 0.88)
+where  cost_price = 0 and wholesale_price > 0;
 
 -- ============================================================
 --  MAKE YOURSELF ADMIN

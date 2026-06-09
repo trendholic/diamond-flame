@@ -32,22 +32,45 @@
       el("gridLoading").textContent = "Catalogue unavailable until the backend is connected.";
       return;
     }
-    db.from("products")
-      .select("*")
-      .eq("active", true)
-      .order("category", { ascending: true })
-      .order("name", { ascending: true })
-      .then(function (res) {
-        if (res.error) {
-          el("gridLoading").textContent = "Could not load catalogue: " + res.error.message;
-          return;
-        }
-        products = res.data || [];
-        el("statCount").textContent = products.length;
-        renderFilters();
-        renderGrid();
-        updateCartUI();
-      });
+    // catalogue() is a security-definer RPC that returns only the prices the
+    // caller may see: wholesale is NULL unless you are a dealer/admin, cost is
+    // NULL unless admin. So the UI is driven purely by the data it receives.
+    db.rpc("catalogue").then(function (res) {
+      if (res.error) {
+        el("gridLoading").textContent = "Could not load catalogue: " + res.error.message;
+        return;
+      }
+      products = res.data || [];
+      el("statCount").textContent = products.length;
+      renderFilters();
+      renderGrid();
+      updateCartUI();
+      updateDealerHint();
+    });
+  }
+
+  // True when the catalogue came back with wholesale pricing (i.e. dealer/admin).
+  function isDealerView() {
+    return products.some(function (p) {
+      return p.wholesale_price !== null && p.wholesale_price !== undefined;
+    });
+  }
+  function hasWholesale(p) {
+    return p.wholesale_price !== null && p.wholesale_price !== undefined;
+  }
+  function unitPrice(p) { return hasWholesale(p) ? p.wholesale_price : p.retail_price; }
+  function minQty(p) { return hasWholesale(p) ? (p.moq || 1) : 1; }
+
+  function updateDealerHint() {
+    var hint = el("dealerHint");
+    if (!hint) return;
+    if (isDealerView()) {
+      hint.textContent = "✓ Dealer pricing active — you're seeing wholesale rates.";
+      hint.className = "dealer-hint active";
+    } else {
+      hint.textContent = "Retail prices shown. Dealers: sign in to see wholesale rates.";
+      hint.className = "dealer-hint";
+    }
   }
 
   function categories() {
@@ -96,8 +119,14 @@
     }
     grid.innerHTML = "";
     list.forEach(function (p) {
-      var saving = p.retail_price > p.wholesale_price
+      var dealer = hasWholesale(p);
+      // Savings shown to dealers = wholesale vs retail.
+      var saving = dealer && p.retail_price > p.wholesale_price
         ? Math.round(100 - (p.wholesale_price / p.retail_price) * 100) : 0;
+      var priceBlock = dealer
+        ? '<span class="wholesale">' + pkr(p.wholesale_price) + '<small>/unit dealer price</small></span>' +
+          '<span class="retail">' + pkr(p.retail_price) + "</span>"
+        : '<span class="wholesale">' + pkr(p.retail_price) + '<small>/unit</small></span>';
       var card = document.createElement("article");
       card.className = "card";
       card.innerHTML =
@@ -109,12 +138,9 @@
           '<span class="card-brand">' + esc(p.brand || "") + " · " + esc(p.category) + "</span>" +
           '<h3 class="card-name">' + esc(p.name) + "</h3>" +
           '<p class="card-desc">' + esc(p.description || "") + "</p>" +
-          '<div class="price-row">' +
-            '<span class="wholesale">' + pkr(p.wholesale_price) + '<small>/unit wholesale</small></span>' +
-            (saving ? '<span class="retail">' + pkr(p.retail_price) + "</span>" : "") +
-          "</div>" +
+          '<div class="price-row">' + priceBlock + "</div>" +
           '<div class="card-foot">' +
-            '<span class="moq">MOQ ' + p.moq + "</span>" +
+            (dealer ? '<span class="moq">MOQ ' + p.moq + "</span>" : '<span class="moq">Retail</span>') +
             '<button class="add-btn" ' + (p.stock <= 0 ? "disabled" : "") + ' data-id="' + esc(p.id) + '">' +
               (p.stock <= 0 ? "Unavailable" : "Add to order") + "</button>" +
           "</div>" +
@@ -130,14 +156,14 @@
     var p = find(id);
     if (!p) return;
     var cur = cart[id] || 0;
-    cart[id] = cur ? cur + 1 : p.moq; // first add jumps to MOQ
+    cart[id] = cur ? cur + 1 : minQty(p); // first add jumps to the minimum (MOQ for dealers, 1 retail)
     saveCart();
     updateCartUI();
     openCart();
   }
   function setQty(id, qty) {
     var p = find(id);
-    var min = p ? p.moq : 1;
+    var min = p ? minQty(p) : 1;
     if (qty < min) delete cart[id]; else cart[id] = qty;
     saveCart();
     updateCartUI();
@@ -145,7 +171,7 @@
   function cartCount() { var n = 0; for (var k in cart) n += cart[k]; return n; }
   function cartTotal() {
     var t = 0;
-    for (var id in cart) { var p = find(id); if (p) t += p.wholesale_price * cart[id]; }
+    for (var id in cart) { var p = find(id); if (p) t += unitPrice(p) * cart[id]; }
     return t;
   }
 
@@ -165,13 +191,13 @@
         '<div class="thumb">' + esc(p.emoji || "📦") + "</div>" +
         '<div class="info">' +
           "<strong>" + esc(p.name) + "</strong>" +
-          '<span class="unit">' + pkr(p.wholesale_price) + " · MOQ " + p.moq + "</span>" +
+          '<span class="unit">' + pkr(unitPrice(p)) + (hasWholesale(p) ? " · MOQ " + p.moq : "") + "</span>" +
           '<div class="qty">' +
             '<button data-act="dec">−</button><span>' + cart[id] + '</span><button data-act="inc">+</button>' +
             '<button class="remove">Remove</button>' +
           "</div>" +
         "</div>" +
-        '<div class="line-total">' + pkr(p.wholesale_price * cart[id]) + "</div>";
+        '<div class="line-total">' + pkr(unitPrice(p) * cart[id]) + "</div>";
       row.querySelector('[data-act="inc"]').addEventListener("click", function () { setQty(id, cart[id] + 1); });
       row.querySelector('[data-act="dec"]').addEventListener("click", function () { setQty(id, cart[id] - 1); });
       row.querySelector(".remove").addEventListener("click", function () { setQty(id, 0); });
@@ -207,7 +233,7 @@
     for (var id in cart) {
       var p = find(id); if (!p) continue;
       html += '<div class="sum-row"><span>' + esc(p.name) + " × " + cart[id] +
-        "</span><span>" + pkr(p.wholesale_price * cart[id]) + "</span></div>";
+        "</span><span>" + pkr(unitPrice(p) * cart[id]) + "</span></div>";
     }
     html += '<div class="sum-row sum-total"><span>Total</span><span>' + pkr(cartTotal()) + "</span></div>";
     el("orderSummary").innerHTML = html;
@@ -218,7 +244,11 @@
     var f = e.target;
     var items = Object.keys(cart).map(function (id) {
       var p = find(id);
-      return { id: id, name: p.name, brand: p.brand, qty: cart[id], price: p.wholesale_price };
+      return {
+        id: id, name: p.name, brand: p.brand, qty: cart[id],
+        price: unitPrice(p),
+        tier: hasWholesale(p) ? "wholesale" : "retail"
+      };
     });
     var order = {
       ref: "DF-" + Date.now().toString(36).toUpperCase(),
@@ -256,7 +286,9 @@
         var label = (p.full_name || p.email || "Account").split(" ")[0];
         btn.textContent = "Hi, " + label + " · Sign out";
         btn.onclick = function () {
-          db.auth.signOut().then(function () { profile = null; refreshAuthUI(); DF.toast("Signed out."); });
+          db.auth.signOut().then(function () {
+            profile = null; refreshAuthUI(); loadProducts(); DF.toast("Signed out.");
+          });
         };
       } else {
         btn.textContent = "Sign in";
@@ -271,7 +303,7 @@
     db.auth.signInWithPassword({ email: f.email.value.trim(), password: f.password.value })
       .then(function (res) {
         if (res.error) { DF.toast(res.error.message, "warn"); return; }
-        closeAuth(); f.reset(); refreshAuthUI(); DF.toast("Welcome back.");
+        closeAuth(); f.reset(); refreshAuthUI(); loadProducts(); DF.toast("Welcome back.");
       });
   }
 

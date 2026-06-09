@@ -139,13 +139,19 @@
   function renderProducts() {
     var t = el("productsTable").querySelector("tbody");
     if (!products.length) { t.innerHTML = '<tr><td class="empty-cell">No products yet.</td></tr>'; return; }
-    var head = '<tr class="thead"><th>Item</th><th>Category</th><th>Wholesale</th><th>MOQ</th><th>Stock</th><th></th></tr>';
+    var head = '<tr class="thead"><th>Item</th><th>Retail</th><th>Wholesale</th>' +
+      '<th>Landing</th><th>Margin</th><th>Stock</th><th></th></tr>';
     t.innerHTML = head + products.map(function (p) {
+      var cost = Number(p.cost_price || 0);
+      var wm = Number(p.wholesale_price || 0) - cost;
+      var wmPct = p.wholesale_price > 0 ? Math.round((wm / p.wholesale_price) * 100) : 0;
       return "<tr" + (p.active ? "" : ' class="inactive"') + ">" +
-        "<td>" + esc(p.emoji || "📦") + " <strong>" + esc(p.name) + "</strong><br><small>" + esc(p.brand || "") + "</small></td>" +
-        "<td>" + esc(p.category) + "</td>" +
+        "<td>" + esc(p.emoji || "📦") + " <strong>" + esc(p.name) + "</strong><br><small>" +
+          esc(p.brand || "") + " · " + esc(p.category) + " · MOQ " + p.moq + "</small></td>" +
+        "<td>" + pkr(p.retail_price) + "</td>" +
         "<td>" + pkr(p.wholesale_price) + "</td>" +
-        "<td>" + p.moq + "</td>" +
+        '<td class="cost-cell">' + pkr(cost) + "</td>" +
+        '<td><span class="' + (wm >= 0 ? "pos" : "neg") + '">' + pkr(wm) + " · " + wmPct + "%</span></td>" +
         "<td>" + p.stock + "</td>" +
         '<td class="actions">' +
           '<button class="link-btn" data-edit="' + esc(p.id) + '">Edit</button>' +
@@ -180,15 +186,36 @@
       f["description"].value = p.description || "";
       f["retail_price"].value = p.retail_price;
       f["wholesale_price"].value = p.wholesale_price;
+      f["cost_price"].value = p.cost_price != null ? p.cost_price : 0;
       f["moq"].value = p.moq;
       f["stock"].value = p.stock;
       f["emoji"].value = p.emoji || "📦";
       f["active"].checked = !!p.active;
     } else {
       f["emoji"].value = "📦";
+      f["cost_price"].value = 0;
       f["active"].checked = true;
     }
+    renderMargins();
     el("productOverlay").classList.add("open");
+  }
+
+  // Live profit-margin readout as the admin types prices.
+  function renderMargins() {
+    var box = el("marginReadout");
+    if (!box) return;
+    var f = el("productForm").elements;
+    var cost = Number(f["cost_price"].value) || 0;
+    var retail = Number(f["retail_price"].value) || 0;
+    var ws = Number(f["wholesale_price"].value) || 0;
+    function pct(sale) { return sale > 0 ? Math.round(((sale - cost) / sale) * 100) : 0; }
+    function cls(n) { return n >= 0 ? "pos" : "neg"; }
+    var rm = retail - cost, wm = ws - cost;
+    box.innerHTML =
+      '<div class="m-row"><span>Retail margin</span><strong class="' + cls(rm) + '">' +
+        pkr(rm) + " · " + pct(retail) + "%</strong></div>" +
+      '<div class="m-row"><span>Wholesale margin</span><strong class="' + cls(wm) + '">' +
+        pkr(wm) + " · " + pct(ws) + "%</strong></div>";
   }
 
   function saveProduct(e) {
@@ -201,6 +228,7 @@
       description: f["description"].value.trim(),
       retail_price: Number(f["retail_price"].value),
       wholesale_price: Number(f["wholesale_price"].value),
+      cost_price: Number(f["cost_price"].value),
       moq: Math.max(1, parseInt(f["moq"].value, 10) || 1),
       stock: Math.max(0, parseInt(f["stock"].value, 10) || 0),
       emoji: f["emoji"].value.trim() || "📦",
@@ -232,16 +260,31 @@
   function renderCustomers(rows) {
     var t = el("customersTable").querySelector("tbody");
     if (!rows.length) { t.innerHTML = '<tr><td class="empty-cell">No customers yet.</td></tr>'; return; }
-    var head = '<tr class="thead"><th>Business</th><th>Name</th><th>Contact</th><th>Role</th><th>Joined</th></tr>';
+    var head = '<tr class="thead"><th>Business</th><th>Name</th><th>Contact</th><th>Role / access</th><th>Joined</th></tr>';
     t.innerHTML = head + rows.map(function (c) {
+      var opts = ["customer", "dealer", "admin"].map(function (r) {
+        return '<option value="' + r + '"' + (r === c.role ? " selected" : "") + ">" + r + "</option>";
+      }).join("");
       return "<tr>" +
         "<td><strong>" + esc(c.business || "—") + "</strong></td>" +
         "<td>" + esc(c.full_name || "—") + "</td>" +
         "<td>" + esc(c.email || "") + "<br><small>" + esc(c.phone || "") + "</small></td>" +
-        '<td><span class="pill pill-' + esc(c.role) + '">' + esc(c.role) + "</span></td>" +
+        '<td><select class="role-select" data-id="' + esc(c.id) + '">' + opts + "</select></td>" +
         "<td>" + esc(fmtDate(c.created_at)) + "</td>" +
         "</tr>";
     }).join("");
+
+    Array.prototype.forEach.call(t.querySelectorAll(".role-select"), function (sel) {
+      sel.addEventListener("change", function () {
+        var id = sel.getAttribute("data-id");
+        db.from("profiles").update({ role: sel.value }).eq("id", id).then(function (res) {
+          if (res.error) { DF.toast(res.error.message, "warn"); return; }
+          DF.toast(sel.value === "dealer"
+            ? "Dealer approved — they now see wholesale prices."
+            : "Role updated to " + sel.value + ".");
+        });
+      });
+    });
   }
 
   /* ---------- wiring ---------- */
@@ -265,6 +308,7 @@
     el("newProductBtn").addEventListener("click", function () { openProduct(null); });
     el("closeProduct").addEventListener("click", function () { el("productOverlay").classList.remove("open"); });
     el("productForm").addEventListener("submit", saveProduct);
+    el("productForm").addEventListener("input", renderMargins);
 
     Array.prototype.forEach.call(document.querySelectorAll(".dtab"), function (tab) {
       tab.addEventListener("click", function () {
