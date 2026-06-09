@@ -11,6 +11,8 @@
   var orders = [];
   var customers = [];
   var requests = [];
+  var customerQuery = "";
+  var customerRole = "";
 
   var STATUSES = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
 
@@ -148,6 +150,34 @@
     });
   }
 
+  // CSV-escape a single cell (quote when it contains comma/quote/newline).
+  function csvCell(v) {
+    v = (v == null ? "" : String(v));
+    return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+  }
+
+  function exportOrdersCsv() {
+    if (!orders.length) { DF.toast("No orders to export.", "warn"); return; }
+    var headers = ["Ref", "Business", "Customer", "Phone", "Email", "Address", "Items", "Total (PKR)", "Status", "Date"];
+    var lines = orders.map(function (o) {
+      var items = (Array.isArray(o.items) ? o.items : []).map(function (i) {
+        return (i.name || "") + " x" + (i.qty || 0);
+      }).join("; ");
+      return [o.ref || o.id, o.business, o.customer_name, o.phone, o.email, o.address,
+        items, o.total, o.status, fmtDate(o.created_at)].map(csvCell).join(",");
+    });
+    // Prepend BOM so Excel reads UTF-8 (Rs sign, etc.) correctly.
+    var csv = "﻿" + headers.join(",") + "\r\n" + lines.join("\r\n");
+    var blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "diamond-flame-orders-" + new Date().toISOString().slice(0, 10) + ".csv";
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    DF.toast("Exported " + orders.length + " order" + (orders.length === 1 ? "" : "s") + ".");
+  }
+
   /* ---------- products ---------- */
   function renderProducts() {
     var t = el("productsTable").querySelector("tbody");
@@ -270,11 +300,25 @@
   }
 
   /* ---------- customers ---------- */
+  function filteredCustomers() {
+    var q = customerQuery.trim().toLowerCase();
+    return customers.filter(function (c) {
+      if (customerRole && c.role !== customerRole) return false;
+      if (!q) return true;
+      return (c.business || "").toLowerCase().indexOf(q) > -1 ||
+        (c.full_name || "").toLowerCase().indexOf(q) > -1 ||
+        (c.email || "").toLowerCase().indexOf(q) > -1 ||
+        (c.phone || "").toLowerCase().indexOf(q) > -1;
+    });
+  }
+
   function renderCustomers() {
     var t = el("customersTable").querySelector("tbody");
     if (!customers.length) { t.innerHTML = '<tr><td class="empty-cell">No customers yet.</td></tr>'; return; }
+    var list = filteredCustomers();
+    if (!list.length) { t.innerHTML = '<tr><td class="empty-cell">No customers match your filter.</td></tr>'; return; }
     var head = '<tr class="thead"><th>Business</th><th>Name</th><th>Contact</th><th>Documents</th><th>Role / access</th><th>Joined</th></tr>';
-    t.innerHTML = head + customers.map(function (c) {
+    t.innerHTML = head + list.map(function (c) {
       var opts = ["customer", "dealer", "admin"].map(function (r) {
         return '<option value="' + r + '"' + (r === c.role ? " selected" : "") + ">" + r + "</option>";
       }).join("");
@@ -329,6 +373,7 @@
 
   function renderRequests() {
     var t = el("requestsTable").querySelector("tbody");
+    el("approveAll").disabled = !requests.length;
     if (!requests.length) { t.innerHTML = '<tr><td class="empty-cell">No pending dealer applications.</td></tr>'; return; }
     var head = '<tr class="thead"><th>Business</th><th>Applicant</th><th>Contact</th><th>Verification</th><th>Applied</th><th></th></tr>';
     t.innerHTML = head + requests.map(function (c) {
@@ -349,6 +394,17 @@
     });
     Array.prototype.forEach.call(t.querySelectorAll("[data-reject]"), function (b) {
       b.addEventListener("click", function () { decideRequest(b.getAttribute("data-reject"), false); });
+    });
+  }
+
+  function approveAllRequests() {
+    if (!requests.length) return;
+    if (!window.confirm("Approve all " + requests.length + " pending dealer application(s)?")) return;
+    var ids = requests.map(function (c) { return c.id; });
+    db.from("profiles").update({ role: "dealer", dealer_status: "approved" }).in("id", ids).then(function (res) {
+      if (res.error) { DF.toast(res.error.message, "warn"); return; }
+      DF.toast("Approved " + ids.length + " dealer" + (ids.length === 1 ? "" : "s") + ".");
+      loadCustomers().then(function () { renderStats(); renderRequests(); renderDealerOptions(); });
     });
   }
 
@@ -455,6 +511,10 @@
     });
 
     el("refreshOrders").addEventListener("click", function () { loadOrders().then(renderStats); });
+    el("exportOrders").addEventListener("click", exportOrdersCsv);
+    el("approveAll").addEventListener("click", approveAllRequests);
+    el("customerSearch").addEventListener("input", function (e) { customerQuery = e.target.value; renderCustomers(); });
+    el("customerRole").addEventListener("change", function (e) { customerRole = e.target.value; renderCustomers(); });
     el("refreshCustomers").addEventListener("click", function () {
       loadCustomers().then(function () { renderStats(); renderRequests(); renderDealerOptions(); });
     });
