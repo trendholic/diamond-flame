@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — Diamond Flame Home Appliances</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body class="admin-body">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html">
+        <span class="brand-mark">🔥</span>
+        <span class="brand-text"><strong>Diamond Flame</strong><small>Dealer Dashboard</small></span>
+      </a>
+      <div class="header-actions">
+        <a class="ghost-btn" href="index.html">← Storefront</a>
+        <button class="ghost-btn" id="signOutBtn" hidden>Sign out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container admin-main">
+    <!-- Login gate -->
+    <section id="loginGate" class="login-gate" hidden>
+      <div class="gate-card">
+        <h2>Dashboard sign in</h2>
+        <p class="muted">Admin access only. Sign in with your dealer account.</p>
+        <form id="adminLoginForm" class="auth-form">
+          <label>Email<input name="email" type="email" required autocomplete="email" /></label>
+          <label>Password<input name="password" type="password" required autocomplete="current-password" /></label>
+          <button class="btn btn-flame full" type="submit">Sign in</button>
+        </form>
+        <p class="gate-hint" id="gateHint"></p>
+      </div>
+    </section>
+
+    <!-- Dashboard -->
+    <section id="dashboard" hidden>
+      <div class="dash-head">
+        <h1>Overview</h1>
+        <span class="who" id="whoami"></span>
+      </div>
+
+      <div class="stats" id="stats"></div>
+
+      <div class="dash-tabs">
+        <button class="dtab active" data-view="orders">Orders</button>
+        <button class="dtab" data-view="products">Products</button>
+        <button class="dtab" data-view="customers">Customers</button>
+      </div>
+
+      <!-- Orders -->
+      <div class="view" id="view-orders">
+        <div class="panel">
+          <div class="panel-head"><h3>Orders</h3><button class="ghost-btn" id="refreshOrders">Refresh</button></div>
+          <div class="table-wrap"><table id="ordersTable"><tbody></tbody></table></div>
+        </div>
+      </div>
+
+      <!-- Products -->
+      <div class="view" id="view-products" hidden>
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Products</h3>
+            <button class="btn btn-flame sm" id="newProductBtn">+ Add product</button>
+          </div>
+          <div class="table-wrap"><table id="productsTable"><tbody></tbody></table></div>
+        </div>
+      </div>
+
+      <!-- Customers -->
+      <div class="view" id="view-customers" hidden>
+        <div class="panel">
+          <div class="panel-head"><h3>Customers</h3><button class="ghost-btn" id="refreshCustomers">Refresh</button></div>
+          <div class="table-wrap"><table id="customersTable"><tbody></tbody></table></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Product editor modal -->
+  <div class="overlay modal-overlay" id="productOverlay">
+    <div class="modal" role="dialog" aria-modal="true">
+      <button class="x modal-x" id="closeProduct" aria-label="Close">✕</button>
+      <h3 id="productModalTitle">Add product</h3>
+      <form id="productForm" class="auth-form">
+        <input type="hidden" name="id" />
+        <label>Name<input name="name" required /></label>
+        <div class="two">
+          <label>Brand<input name="brand" /></label>
+          <label>Category<input name="category" required /></label>
+        </div>
+        <label>Description<textarea name="description" rows="2"></textarea></label>
+        <div class="two">
+          <label>Retail price (Rs)<input name="retail_price" type="number" min="0" step="1" required /></label>
+          <label>Wholesale price (Rs)<input name="wholesale_price" type="number" min="0" step="1" required /></label>
+        </div>
+        <div class="two">
+          <label>MOQ<input name="moq" type="number" min="1" step="1" value="1" required /></label>
+          <label>Stock<input name="stock" type="number" min="0" step="1" value="0" required /></label>
+        </div>
+        <div class="two">
+          <label>Emoji<input name="emoji" maxlength="4" value="📦" /></label>
+          <label class="check">Active<input name="active" type="checkbox" checked /></label>
+        </div>
+        <button class="btn btn-flame full" type="submit">Save product</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/core.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

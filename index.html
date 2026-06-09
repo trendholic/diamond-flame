@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Diamond Flame — Home Appliances Wholesale</title>
+  <meta name="description" content="Diamond Flame Home Appliances — wholesale refrigerators, ACs, washing machines, TVs and more. Bulk prices in PKR." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="site-header" id="top">
+    <div class="container header-inner">
+      <a class="brand" href="#top">
+        <span class="brand-mark">🔥</span>
+        <span class="brand-text"><strong>Diamond Flame</strong><small>Home Appliances · Wholesale</small></span>
+      </a>
+      <nav class="nav">
+        <a href="#catalogue">Catalogue</a>
+        <a href="#why">Why us</a>
+        <a href="admin.html">Dashboard</a>
+      </nav>
+      <div class="header-actions">
+        <button class="ghost-btn" id="authBtn">Sign in</button>
+        <button class="cart-btn" id="cartBtn" aria-label="Open bulk order">
+          🛒<span class="cart-count" id="cartCount">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container hero-inner">
+      <p class="eyebrow">Pakistan's wholesale appliance partner</p>
+      <h1>Stock your store at <span class="flame">flame-hot</span> bulk prices.</h1>
+      <p class="lead">Refrigerators, inverter ACs, washing machines, TVs and more — genuine brands, wholesale rates in PKR, delivered across the country.</p>
+      <div class="hero-cta">
+        <a class="btn btn-flame" href="#catalogue">Browse catalogue</a>
+        <a class="btn btn-line" href="admin.html">Dealer dashboard</a>
+      </div>
+      <div class="hero-stats">
+        <div><strong id="statCount">—</strong><span>SKUs in stock</span></div>
+        <div><strong>21K+</strong><span>units delivered</span></div>
+        <div><strong>48hr</strong><span>nationwide dispatch</span></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="container">
+    <div class="backend-banner" id="backendBanner" hidden>
+      ⚠️ Backend not connected. Add your Supabase URL &amp; anon key in <code>js/config.js</code>.
+    </div>
+  </div>
+
+  <main>
+    <section id="catalogue" class="catalogue">
+      <div class="container">
+        <div class="section-head">
+          <h2>Wholesale catalogue</h2>
+          <input class="search" id="search" type="search" placeholder="Search appliances, brands…" />
+        </div>
+        <div class="filters" id="filters"></div>
+        <div class="grid" id="productGrid">
+          <p class="loading" id="gridLoading">Loading catalogue…</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="why" class="why">
+      <div class="container why-inner">
+        <div class="why-card"><span>🏷️</span><h3>True wholesale rates</h3><p>Tiered bulk pricing with clear minimum order quantities on every item.</p></div>
+        <div class="why-card"><span>🚚</span><h3>Nationwide dispatch</h3><p>Insured delivery to every major city within 48 hours of confirmation.</p></div>
+        <div class="why-card"><span>✅</span><h3>Genuine brands</h3><p>Dawlance, Haier, Gree, Samsung, PEL, Orient and more — with warranty.</p></div>
+        <div class="why-card"><span>💳</span><h3>Flexible terms</h3><p>Cash on delivery and credit terms available for verified dealers.</p></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div>
+        <span class="brand-text footer-brand"><strong>🔥 Diamond Flame</strong><small>Home Appliances · Wholesale</small></span>
+        <p>Wholesale distribution of home &amp; kitchen appliances across Pakistan.</p>
+      </div>
+      <div><h4>Contact</h4><p><a href="mailto:sales@diamond-flame.com">sales@diamond-flame.com</a></p><p>Mon–Sat · 10am–7pm PKT</p></div>
+      <div><h4>Warehouse</h4><p>Hall Road, Lahore<br />Pakistan</p></div>
+    </div>
+    <div class="container copyright">© <span id="year"></span> Diamond Flame Home Appliances. Prices in PKR.</div>
+  </footer>
+
+  <!-- Cart / bulk order drawer -->
+  <div class="overlay" id="drawerOverlay"></div>
+  <aside class="drawer" id="cartDrawer" aria-hidden="true">
+    <div class="drawer-head">
+      <h3>Bulk order</h3>
+      <button class="x" id="closeCart" aria-label="Close">✕</button>
+    </div>
+    <div class="drawer-body" id="cartItems"></div>
+    <div class="drawer-foot">
+      <div class="row total"><span>Order total</span><strong id="cartTotal">Rs 0</strong></div>
+      <button class="btn btn-flame full" id="checkoutBtn">Place wholesale order</button>
+      <p class="muted-note">Wholesale prices shown · MOQ enforced per item</p>
+    </div>
+  </aside>
+
+  <!-- Auth modal -->
+  <div class="overlay modal-overlay" id="authOverlay">
+    <div class="modal" role="dialog" aria-modal="true">
+      <button class="x modal-x" id="closeAuth" aria-label="Close">✕</button>
+      <div class="tabs">
+        <button class="tab active" data-tab="login">Sign in</button>
+        <button class="tab" data-tab="signup">Create dealer account</button>
+      </div>
+      <form id="loginForm" class="auth-form">
+        <label>Email<input name="email" type="email" required autocomplete="email" /></label>
+        <label>Password<input name="password" type="password" required autocomplete="current-password" /></label>
+        <button class="btn btn-flame full" type="submit">Sign in</button>
+      </form>
+      <form id="signupForm" class="auth-form" hidden>
+        <label>Business / shop name<input name="business" required /></label>
+        <label>Full name<input name="full_name" required autocomplete="name" /></label>
+        <label>Phone<input name="phone" required inputmode="tel" autocomplete="tel" /></label>
+        <label>Email<input name="email" type="email" required autocomplete="email" /></label>
+        <label>Password<input name="password" type="password" required minlength="6" autocomplete="new-password" /></label>
+        <button class="btn btn-flame full" type="submit">Create account</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Checkout modal -->
+  <div class="overlay modal-overlay" id="checkoutOverlay">
+    <div class="modal" role="dialog" aria-modal="true">
+      <button class="x modal-x" id="closeCheckout" aria-label="Close">✕</button>
+      <div id="checkoutForm">
+        <h3>Confirm wholesale order</h3>
+        <form id="orderForm" class="auth-form">
+          <label>Business / shop name<input name="business" required /></label>
+          <label>Contact name<input name="customer_name" required autocomplete="name" /></label>
+          <label>Phone<input name="phone" required inputmode="tel" autocomplete="tel" /></label>
+          <label>Email<input name="email" type="email" autocomplete="email" /></label>
+          <label>Delivery address<textarea name="address" required rows="3"></textarea></label>
+          <div class="order-summary" id="orderSummary"></div>
+          <button class="btn btn-flame full" type="submit">Submit order</button>
+        </form>
+      </div>
+      <div id="checkoutDone" class="done" hidden>
+        <span class="done-mark">✓</span>
+        <h3>Order received</h3>
+        <p id="doneMsg"></p>
+        <button class="btn btn-flame" id="doneClose">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/core.js"></script>
+  <script src="js/store.js"></script>
+</body>
+</html>
