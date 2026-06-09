@@ -208,7 +208,18 @@
   /* ---------- drawers & modals ---------- */
   function openCart() { el("cartDrawer").classList.add("open"); el("drawerOverlay").classList.add("open"); }
   function closeCart() { el("cartDrawer").classList.remove("open"); el("drawerOverlay").classList.remove("open"); }
-  function openAuth() { el("authOverlay").classList.add("open"); }
+  function openAuth() {
+    // Always open on the Sign-in tab in a clean state.
+    Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (t) {
+      t.classList.toggle("active", t.getAttribute("data-tab") === "login");
+    });
+    el("loginForm").hidden = false;
+    el("signupForm").hidden = true;
+    el("dealerFields").hidden = true;
+    el("authTitle").textContent = "Welcome back";
+    el("authSub").textContent = "Sign in to see your pricing and track your orders.";
+    el("authOverlay").classList.add("open");
+  }
   function closeAuth() { el("authOverlay").classList.remove("open"); }
   function closeCheckout() { el("checkoutOverlay").classList.remove("open"); }
 
