@@ -7,12 +7,14 @@
   var el = DF.el, pkr = DF.pkr, esc = DF.esc;
 
   var STORAGE_KEY = "dfha.cart.v2"; // v2: keyed by product+variant, value {pid,variant,qty}
+  var SETTINGS_KEY = "dfha.settings.v1"; // cached branding/settings — applied instantly to avoid a flash of old theme
   var products = [];
   var cart = loadCart();
   var profile = null;
   var activeCat = "All";
   var query = "";
   var detailProduct = null, detailVariant = "", detailQty = 1;
+  var heroTimer = null; // hero-slide crossfade interval (guarded so re-applying settings can't stack timers)
 
   function loadCart() {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
@@ -91,10 +93,23 @@
   /* ---------- store branding / images ---------- */
   function loadSettings() {
     if (!DF.configured || !db) return;
+    // Apply the last-known settings synchronously so saved branding shows from the
+    // first paint — this removes the flash of default/old theme while the network
+    // request is still in flight.
+    var cachedRaw = null;
+    try { cachedRaw = localStorage.getItem(SETTINGS_KEY); } catch (e) {}
+    if (cachedRaw) {
+      try { applySettings(JSON.parse(cachedRaw)); } catch (e) {}
+    }
     db.from("settings").select("key,value").then(function (res) {
       if (res.error || !res.data) return;
       var map = {};
       res.data.forEach(function (r) { map[r.key] = r.value; });
+      var json = JSON.stringify(map);
+      // Unchanged since last visit — already applied from cache, so skip re-applying
+      // (avoids a needless re-render / flicker).
+      if (json === cachedRaw) return;
+      try { localStorage.setItem(SETTINGS_KEY, json); } catch (e) {}
       applySettings(map);
     });
   }
@@ -123,8 +138,9 @@
       });
       var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       if (heroImgs.length > 1 && !reduce) {
+        if (heroTimer) clearInterval(heroTimer); // settings may be applied twice (cache then network); never stack timers
         var slides = hp.querySelectorAll(".hero-slide"), idx = 0;
-        setInterval(function () {
+        heroTimer = setInterval(function () {
           slides[idx].classList.remove("active");
           idx = (idx + 1) % slides.length;
           slides[idx].classList.add("active");
