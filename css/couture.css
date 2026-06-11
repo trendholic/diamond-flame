@@ -201,3 +201,25 @@ body{font-feature-settings:"liga" 1,"calt" 1}
 @media (prefers-reduced-motion:reduce){
   .trust-sheen,.tf-icon,.pill::after{animation:none}
 }
+
+/* ===================================================================
+   Reviews carousel — auto-rotating fade slider (no duplication)
+   =================================================================== */
+.rv-wrap{display:flex;align-items:center;gap:16px;margin-top:10px}
+.rv-viewport{flex:1;overflow:hidden}
+.rv-track{display:grid;grid-template-columns:repeat(var(--pv,3),minmax(0,1fr));gap:20px}
+.rv-track.rv-anim{animation:rvFade .55s cubic-bezier(.2,.7,.2,1)}
+@keyframes rvFade{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.rv-track .rw-card{flex:initial;max-width:none;width:auto;min-height:208px}
+.rv-nav{flex:none;width:48px;height:48px;border-radius:50%;border:1px solid var(--silver);background:#fff;
+  color:var(--ink);font-size:22px;line-height:1;cursor:pointer;box-shadow:0 6px 18px rgba(48,36,18,.08);padding:0;
+  display:grid;place-items:center;transition:border-color .2s,color .2s,transform .2s,box-shadow .2s}
+.rv-nav:hover{border-color:var(--accent);color:var(--accent-ink);transform:translateY(-2px);
+  box-shadow:0 12px 26px rgba(168,115,56,.22)}
+.rv-nav:active{transform:translateY(0) scale(.96)}
+.rv-progress{height:3px;width:180px;background:var(--silver);border-radius:3px;overflow:hidden;margin:30px auto 0}
+.rv-progress i{display:block;height:100%;width:100%;transform-origin:0 50%;
+  background:linear-gradient(90deg,var(--accent),var(--accent-2));animation:rvBar 5.2s linear infinite}
+@keyframes rvBar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@media(max-width:600px){.rv-nav{width:40px;height:40px;font-size:18px}.rv-wrap{gap:10px}}
+@media (prefers-reduced-motion:reduce){.rv-track.rv-anim{animation:none}.rv-progress{display:none}}

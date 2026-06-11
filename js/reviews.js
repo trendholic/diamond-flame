@@ -1,8 +1,9 @@
-/* Diamond Flame — customer reviews wall.
-   ▸ To add / edit a review, just add an object to the REVIEWS array below:
-       { n: "Full Name", c: "City", r: 5, t: "What they said about the product." }
-     r = star rating (1-5). Everything else (slider, rows, aggregate rating,
-     avatars) is generated automatically — no other file needs touching. */
+/* Diamond Flame — customer reviews carousel.
+   ▸ To add / edit a review, just add an object to the REVIEWS array:
+       { n: "Full Name", c: "City", r: 5, t: "What they said." }
+   Professional auto-rotating fade slider — each review shown once, no
+   duplication. Responsive (1 / 2 / 3 per view), arrows, auto-advance,
+   pause-on-hover, and a synced progress bar. Zero dependencies. */
 (function () {
   "use strict";
 
@@ -25,12 +26,12 @@
     { n: "Adnan Qureshi", c: "Lahore", r: 5, t: "Range hood looks like it belongs in a showroom. Powerful and surprisingly quiet on low." },
     { n: "Rabia Aslam", c: "Islamabad", r: 5, t: "Electric geyser is compact and fast. Perfect for our apartment, and the finish is spotless." },
     { n: "Zeeshan Ali", c: "Karachi", r: 4, t: "Solid steel hob, even heat across burners. Delivery was insured and arrived without a scratch." },
-    { n: "Komal Pervaiz", c: "Faisalabad", r: 5, t: "I compared a few brands — Diamond Flame's build felt the most premium for the price. No regrets." },
+    { n: "Komal Pervaiz", c: "Faisalabad", r: 5, t: "I compared a few options — Diamond Flame's build felt the most premium for the price. No regrets." },
     { n: "Faisal Mahmood", c: "Sialkot", r: 5, t: "The burners are heavy brass, not cheap alloy. You can feel the quality difference instantly." },
     { n: "Iqra Saleem", c: "Multan", r: 5, t: "Sink came with everything — waste, pipe, the lot. Fitting was effortless thanks to their guide." },
     { n: "Waleed Akhtar", c: "Rawalpindi", r: 5, t: "Hood's auto-clean feature actually works. Six months on and it still looks brand new." },
     { n: "Mehwish Asif", c: "Lahore", r: 5, t: "Ordered online, paid cash on delivery, zero hassle. The hob exceeded my expectations." },
-    { n: "Shahbaz Khan", c: "Peshawar", r: 4, t: "Geyser works great. Would've liked a longer cable but otherwise excellent build." },
+    { n: "Shahbaz Khan", c: "Peshawar", r: 4, t: "Geyser works great and heats fast. Build feels sturdy and safe. Would buy again." },
     { n: "Anam Tariq", c: "Gujranwala", r: 5, t: "The glass-and-steel hob is a centrepiece. Guests always ask where I got it." },
     { n: "Yasir Hussain", c: "Hyderabad", r: 5, t: "Wholesale order of sinks for a housing project — all consistent, all flawless. Will reorder." },
     { n: "Nimra Aziz", c: "Sargodha", r: 5, t: "Cooling fan is powerful and elegant. Runs all day without heating up." },
@@ -42,14 +43,14 @@
     { n: "Rida Fatima", c: "Faisalabad", r: 5, t: "The whole kitchen feels upgraded. Hob, hood and geyser all from Diamond Flame — no complaints." },
     { n: "Talha Mehmood", c: "Sialkot", r: 5, t: "Burners light instantly and the glass is thick and sturdy. Great safety features too." },
     { n: "Mahnoor Shah", c: "Multan", r: 5, t: "Quietest range hood I've used. Clears steam and smell fast, looks gorgeous over the hob." },
-    { n: "Daniyal Khan", c: "Rawalpindi", r: 5, t: "Dealer pricing + reliable stock = my go-to supplier now. Genuine products every order." },
+    { n: "Daniyal Khan", c: "Rawalpindi", r: 5, t: "Dealer pricing plus reliable stock — my go-to supplier now. Genuine products every order." },
     { n: "Aiman Raza", c: "Gujranwala", r: 5, t: "The electric geyser's thermostat is accurate and safe. Heats fast, holds temperature well." },
     { n: "Saad Anwar", c: "Karachi", r: 4, t: "Good steel sink, well finished. Delivery slightly delayed but communication was clear." },
     { n: "Laiba Iqbal", c: "Lahore", r: 5, t: "Auto-ignition, flame-failure cut-off, heavy burners — feels safe and premium. Love it." },
     { n: "Faizan Ali", c: "Peshawar", r: 5, t: "Bought two hobs for rental units. Tenants love them and they've held up perfectly." },
     { n: "Noor Fatima", c: "Hyderabad", r: 5, t: "Sink is gorgeous and the satin finish is so practical. Worth every rupee." },
     { n: "Hassan Raza", c: "Sargodha", r: 5, t: "Powerful suction hood at a fair price. Installation team was professional and tidy." },
-    { n: " Amna Yousaf", c: "Quetta", r: 5, t: "Instant geyser saved us in winter mornings. Compact, fast and beautifully finished." },
+    { n: "Amna Yousaf", c: "Quetta", r: 5, t: "Instant geyser saved us in winter mornings. Compact, fast and beautifully finished." },
     { n: "Rehan Malik", c: "Bahawalpur", r: 4, t: "Cooling fan is strong and quiet. Solid value, would buy again." },
     { n: "Zoya Ahmed", c: "Islamabad", r: 5, t: "The glass hob transformed my kitchen's look. Cleaning is effortless now." },
     { n: "Bilal Hussain", c: "Lahore", r: 5, t: "Ordered a full set at wholesale — packaging, quality and delivery all top notch." },
@@ -60,40 +61,66 @@
   ];
 
   function $(s) { return document.querySelector(s); }
-  function initials(name) {
-    var parts = name.trim().split(/\s+/);
-    return ((parts[0][0] || "") + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase();
-  }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]; }); }
-  function stars(r) {
-    var full = Math.round(r), out = "";
-    for (var i = 0; i < 5; i++) out += i < full ? "★" : "☆";
-    return out;
+  function initials(name) {
+    var p = name.trim().split(/\s+/);
+    return ((p[0][0] || "") + (p.length > 1 ? p[p.length - 1][0] : "")).toUpperCase();
   }
+  function starRow(r) { var f = Math.round(r), o = ""; for (var i = 0; i < 5; i++) o += i < f ? "★" : "☆"; return o; }
   function card(rv) {
     return '<figure class="rw-card">' +
-      '<div class="rw-stars">' + stars(rv.r) + "</div>" +
+      '<div class="rw-stars">' + starRow(rv.r) + "</div>" +
       '<blockquote class="rw-text">“' + esc(rv.t) + '”</blockquote>' +
       '<figcaption class="rw-cap"><span class="rw-av">' + esc(initials(rv.n)) + "</span>" +
       '<span class="rw-meta"><strong>' + esc(rv.n.trim()) + "</strong><small>" + esc(rv.c) + "</small></span></figcaption>" +
       "</figure>";
   }
 
-  function build() {
-    var row1 = $("#rwRow1"), row2 = $("#rwRow2");
-    if (!row1 || !row2) return;
-    // split into two rows, then duplicate each row's content for a seamless loop
-    var half = Math.ceil(REVIEWS.length / 2);
-    var a = REVIEWS.slice(0, half), b = REVIEWS.slice(half);
-    var htmlA = a.map(card).join(""), htmlB = b.map(card).join("");
-    row1.innerHTML = '<div class="rw-track">' + htmlA + htmlA + "</div>";
-    row2.innerHTML = '<div class="rw-track">' + htmlB + htmlB + "</div>";
+  var track, bar, idx = 0, perView = 3, timer = null, INTERVAL = 5200;
+  function pv() { var w = window.innerWidth; return w < 600 ? 1 : (w < 1024 ? 2 : 3); }
+  function pages() { return Math.max(1, Math.ceil(REVIEWS.length / perView)); }
 
-    // aggregate rating
+  function paint() {
+    var start = idx * perView;
+    var items = REVIEWS.slice(start, start + perView);
+    track.style.setProperty("--pv", perView);
+    track.innerHTML = items.map(card).join("");
+    // re-trigger the fade-in animation
+    track.classList.remove("rv-anim"); void track.offsetWidth; track.classList.add("rv-anim");
+    // re-sync the progress bar
+    if (bar) { bar.style.animation = "none"; void bar.offsetWidth; bar.style.animation = ""; }
+  }
+  function go(n) { var t = pages(); idx = ((n % t) + t) % t; paint(); }
+  function next() { go(idx + 1); }
+  function prev() { go(idx - 1); }
+  function play() { stop(); timer = setInterval(next, INTERVAL); }
+  function stop() { if (timer) { clearInterval(timer); timer = null; } }
+
+  function build() {
+    track = $("#rvTrack"); bar = $("#rvBar");
+    if (!track) return;
+    perView = pv();
     var agg = $("#reviewsAggregate");
-    if (agg) {
-      agg.innerHTML = '<span class="rw-agg-stars">' + stars(5) + "</span> Rated by our customers across Pakistan";
+    if (agg) agg.innerHTML = '<span class="rw-agg-stars">★★★★★</span> Rated by our customers across Pakistan';
+    go(0); play();
+
+    var wrap = track.closest(".rv-wrap");
+    if (wrap) {
+      wrap.addEventListener("mouseenter", stop);
+      wrap.addEventListener("mouseleave", play);
     }
+    var p = $("#rvPrev"), n = $("#rvNext");
+    if (p) p.addEventListener("click", function () { prev(); play(); });
+    if (n) n.addEventListener("click", function () { next(); play(); });
+
+    var rt;
+    window.addEventListener("resize", function () {
+      clearTimeout(rt);
+      rt = setTimeout(function () {
+        var np = pv();
+        if (np !== perView) { perView = np; idx = 0; paint(); }
+      }, 200);
+    }, { passive: true });
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", build);
