@@ -92,9 +92,7 @@
     // aggregate rating
     var agg = $("#reviewsAggregate");
     if (agg) {
-      var avg = REVIEWS.reduce(function (s, r) { return s + (r.r || 5); }, 0) / REVIEWS.length;
-      agg.innerHTML = '<span class="rw-agg-stars">' + stars(avg) + "</span> " +
-        avg.toFixed(1) + " / 5 from " + REVIEWS.length + "+ verified Diamond Flame kitchens";
+      agg.innerHTML = '<span class="rw-agg-stars">' + stars(5) + "</span> Rated by our customers across Pakistan";
     }
   }
 

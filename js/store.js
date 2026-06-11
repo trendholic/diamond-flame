@@ -500,7 +500,7 @@
         '<div class="pd-info">' +
           '<span class="pd-eyebrow">' + esc(p.category || "") + "</span>" +
           '<h1 class="pd-name">' + esc(p.name) + "</h1>" +
-          '<div class="pd-rating"><span class="stars">★★★★★</span> <span>Trusted by 5,000+ homes</span></div>' +
+          '<div class="pd-rating"><span class="stars">★★★★★</span> <span>Premium Diamond Flame quality</span></div>' +
           '<div class="pd-price" id="pdPrice"></div>' +
           '<p class="pd-desc">' + esc(p.description || "") + "</p>" +
           chips +
