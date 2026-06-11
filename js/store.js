@@ -376,10 +376,10 @@
     var vs = variantsOf(p);
     var rows = [
       ["Category", p.category],
-      ["Material / type", p.brand || "—"],
+      ["Brand", p.brand || "—"],
       ["Options", vs.length ? vs.map(function (v) { return v.name; }).join(", ") : "Single option"],
       ["Minimum order (dealers)", String(p.moq)],
-      ["Warranty", "10 years (finish)"]
+      ["Warranty", "Official manufacturer warranty"]
     ];
     return '<table class="pd-spectable">' + rows.map(function (r) {
       return "<tr><th>" + esc(r[0]) + "</th><td>" + esc(r[1] == null ? "—" : r[1]) + "</td></tr>";
@@ -389,14 +389,14 @@
     return '<div class="pd-faq">' +
       "<p><strong>Is delivery available nationwide?</strong><br>Yes — insured delivery to all major cities within 48 hours of confirmation.</p>" +
       "<p><strong>Can I pay on delivery?</strong><br>Cash on delivery is available; approved dealers can request credit terms.</p>" +
-      "<p><strong>Do you offer installation?</strong><br>We provide fitting guidance and can arrange professional installation on request.</p>" +
+      "<p><strong>Do you offer installation?</strong><br>We provide setup guidance and can arrange professional installation for ACs, geysers and large appliances on request.</p>" +
       "</div>";
   }
   function reviewsHtml() {
     var data = [
-      ["AK", "Ayesha K. · Lahore", "Built like a tank and looks stunning. Fitting was effortless."],
-      ["MR", "Mizan R. · Gujranwala", "Powerful burners and the glass wipes perfectly clean."],
-      ["SF", "Sana F. · Islamabad", "Whisper quiet yet clears smoke instantly. Premium quality."]
+      ["AK", "Ayesha K. · Lahore", "Genuine, sealed unit and delivered next day. Works flawlessly."],
+      ["MR", "Mizan R. · Gujranwala", "Great wholesale pricing and insured delivery. Highly recommended."],
+      ["SF", "Sana F. · Islamabad", "Best price with full warranty, and the support team is responsive."]
     ];
     return '<h3 class="pd-rev-title">Customer reviews</h3><div class="pd-rev-grid">' + data.map(function (d) {
       return '<figure class="review-card glass-card"><div class="stars">★★★★★</div><blockquote>“' +
@@ -436,7 +436,7 @@
         '<div class="pd-info">' +
           '<span class="pd-eyebrow">' + (p.brand ? esc(p.brand) + " · " : "") + esc(p.category) + "</span>" +
           '<h1 class="pd-name">' + esc(p.name) + "</h1>" +
-          '<div class="pd-rating"><span class="stars">★★★★★</span> <span>Trusted by 1,200+ kitchens</span></div>' +
+          '<div class="pd-rating"><span class="stars">★★★★★</span> <span>Trusted by 5,000+ homes</span></div>' +
           '<div class="pd-price" id="pdPrice"></div>' +
           '<p class="pd-desc">' + esc(p.description || "") + "</p>" +
           chips +
@@ -450,8 +450,8 @@
       "</div>" +
       '<div class="pd-sections">' +
         detailsBlock("Specifications", specsHtml(p), true) +
-        detailsBlock("Warranty &amp; care", "<p>Backed by a 10-year finish warranty against manufacturing defects. Clean with a soft cloth and mild detergent; avoid abrasive pads and harsh chemicals.</p>") +
-        detailsBlock("Installation", "<p>Professional fitting is recommended. Standard cut-out dimensions are provided, and our team offers installation guidance on request.</p>") +
+        detailsBlock("Warranty &amp; care", "<p>Backed by the official manufacturer warranty against defects. Keep your invoice for warranty claims; follow the brand's user manual for care and cleaning.</p>") +
+        detailsBlock("Installation &amp; delivery", "<p>Nationwide insured delivery, most orders within 48 hours. Professional installation for ACs, geysers and large appliances can be arranged on request.</p>") +
         detailsBlock("FAQ", faqHtml()) +
       "</div>" +
       '<div class="pd-reviews">' + reviewsHtml() + "</div>";

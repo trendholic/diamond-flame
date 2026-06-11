@@ -97,6 +97,19 @@ body{font-feature-settings:"liga" 1,"calt" 1}
 /* ---------- Selection + focus accents ---------- */
 ::selection{background:rgba(168,115,56,.18);color:var(--ink)}
 
+/* ---------- Logo mark alignment ---------- */
+.brand-mark{display:inline-flex;align-items:center;line-height:0;filter:drop-shadow(0 6px 14px rgba(168,115,56,.28))}
+.brand-mark svg{display:block}
+
+/* ---------- Trusted-brands strip ---------- */
+.brands-eyebrow{text-align:center;margin:46px 0 18px;font-size:11px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--muted)}
+.brands-strip{margin-top:0;gap:12px 22px}
+.brands-strip span{font-family:'Fraunces',Georgia,serif;font-weight:480;font-size:18px;letter-spacing:.01em;
+  color:var(--charcoal);background:transparent;border:none;box-shadow:none;padding:6px 10px;opacity:.78;
+  transition:opacity .2s,color .2s}
+.brands-strip span:hover{opacity:1;color:var(--accent-ink)}
+
 /* ---------- Responsive type easing ---------- */
 @media(max-width:720px){
   .nav{gap:20px}
