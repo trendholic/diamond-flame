@@ -722,6 +722,21 @@
     if (/^\s*(oops|error|rate ?limit|forbidden|access denied|too many requests)/i.test(html)) return false;
     return true;
   }
+  // Detect bot-wall / "human verification" interstitials (PerimeterX "press & hold",
+  // Cloudflare, DataDome, Akamai, generic CAPTCHA). These pages ARE valid HTML, so
+  // without this guard the parser would import their title/text — e.g. the dreaded
+  // "Activate and hold the button to confirm that you're human" — as the product name.
+  function looksLikeChallenge(text) {
+    if (!text) return false;
+    var t = String(text).slice(0, 8000);
+    return /press\s*&?\s*and?\s*hold|activate and hold|hold the button|confirm (that )?you(['’]?re| are)\s+(a\s+)?human|are you (a )?human|verify (that )?you are (a\s+)?human|i['’]?m not a robot|press\s*&\s*hold|perimeterx|px-captcha|_px\b|datadome|geo\.captcha|checking your browser|just a moment\.{0,3}<\/title>|attention required|cf-browser-verification|cf-chl|enable javascript and cookies|unusual traffic from your|please verify you are a human|recaptcha|hcaptcha|\bcaptcha\b/i.test(t);
+  }
+  // Drop any field that still carries challenge wording (defense in depth).
+  function stripChallengeFields(d) {
+    if (d.name && looksLikeChallenge(d.name)) d.name = "";
+    if (d.description && looksLikeChallenge(d.description)) d.description = "";
+    return d;
+  }
 
   function importFromUrl() {
     var url = el("importUrl").value.trim();
@@ -731,12 +746,25 @@
     var f = el("productForm").elements;
     var proxies = importProxies(url);
 
+    // Normalise an imported image URL: resolve protocol-relative / relative
+    // links against the source page and reject data URIs or non-http schemes.
+    function cleanImageUrl(src) {
+      if (!src) return "";
+      src = String(src).trim();
+      if (src.indexOf("data:") === 0) return "";
+      try { src = new URL(src, url).href; } catch (e) { return ""; }
+      return /^https?:\/\//i.test(src) ? src : "";
+    }
+
     function applyData(d) {
       var got = [];
       if (d.name) { f["name"].value = d.name; got.push("name"); }
       if (d.description) { f["description"].value = d.description; got.push("description"); }
       if (d.price) { f["retail_price"].value = Math.round(d.price); got.push("price"); }
-      if (d.image) { keptImages = [d.image]; f["image_url"].value = d.image; renderGallery(); got.push("image"); }
+      if (d.image) {
+        var img = cleanImageUrl(d.image);
+        if (img) { keptImages = [img]; f["image_url"].value = img; renderGallery(); got.push("image"); }
+      }
       renderMargins();
       return got;
     }
@@ -749,14 +777,16 @@
       var px = proxies[i];
       status.textContent = "Fetching…" + (i ? " (source " + (i + 1) + " of " + proxies.length + ")" : "");
       fetchText(px.url, px.reader ? 20000 : 10000).then(function (text) {
+        if (looksLikeChallenge(text)) throw new Error("bot-challenge"); // skip human-verification walls
         var d;
         if (px.reader) {
           d = parseReader(text);
         } else {
           var html = extractHtml(text);
-          if (!looksLikeHtml(html)) throw new Error("blocked");
+          if (!looksLikeHtml(html) || looksLikeChallenge(html)) throw new Error("blocked");
           d = parseProduct(html);
         }
+        stripChallengeFields(d);
         if (!d.name && !d.image && !d.price) throw new Error("no data");
         var got = applyData(d);
         status.textContent = got.length
