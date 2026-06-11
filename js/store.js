@@ -114,10 +114,10 @@
     });
   }
   function applySettings(s) {
-    if (s.logo_url) {
-      var bm = el("brandMark");
-      if (bm) { bm.innerHTML = '<img src="' + esc(s.logo_url) + '" alt="Diamond Flame" />'; bm.classList.add("has-logo"); }
-    }
+    // NOTE: the site ships with the official Diamond Flame emblem (img/logo.png)
+    // wired into the header, opening screen, footer and favicon. We intentionally
+    // do NOT override it from the admin logo_url/favicon_url so the brand mark stays
+    // crisp and consistent. To change the logo, replace img/logo.png in the repo.
     if (s.hero_headline && el("heroHeadline")) el("heroHeadline").textContent = s.hero_headline;
     if (s.hero_subtext && el("heroSub")) el("heroSub").textContent = s.hero_subtext;
 
@@ -148,11 +148,7 @@
       }
     }
 
-    if (s.favicon_url) {
-      var link = document.querySelector("link[rel='icon']");
-      if (!link) { link = document.createElement("link"); link.rel = "icon"; document.head.appendChild(link); }
-      link.href = s.favicon_url;
-    }
+    // favicon is shipped with the site (img/logo.png) — not overridden from settings.
     if (s.banner_url && el("promoBanner")) {
       el("promoImg").src = s.banner_url;
       if (s.banner_link) el("promoLink").setAttribute("href", s.banner_link);
