@@ -11,6 +11,35 @@
   window.addEventListener("scroll", onScroll, { passive: true });
   onScroll();
 
+  /* mobile menu (hamburger) */
+  var navToggle = $("#navToggle");
+  var navAuth = $("#navAuth");
+  var authBtn = $("#authBtn");
+  function closeMenu() {
+    if (!header) return;
+    header.classList.remove("menu-open");
+    if (navToggle) navToggle.setAttribute("aria-expanded", "false");
+  }
+  if (navToggle && header) {
+    navToggle.addEventListener("click", function () {
+      var open = header.classList.toggle("menu-open");
+      navToggle.setAttribute("aria-expanded", open ? "true" : "false");
+      if (open && navAuth && authBtn) navAuth.textContent = authBtn.textContent; /* mirror sign-in / account state */
+    });
+    $all("#primaryNav a").forEach(function (a) {
+      if (a === navAuth) return;
+      a.addEventListener("click", closeMenu);
+    });
+    if (navAuth && authBtn) {
+      navAuth.addEventListener("click", function (e) { e.preventDefault(); closeMenu(); authBtn.click(); });
+    }
+    window.addEventListener("resize", function () { if (window.innerWidth > 720) closeMenu(); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeMenu(); });
+    document.addEventListener("click", function (e) {
+      if (header.classList.contains("menu-open") && !header.contains(e.target)) closeMenu();
+    });
+  }
+
   /* scroll reveal */
   if ("IntersectionObserver" in window && !reduce) {
     var io = new IntersectionObserver(function (entries) {

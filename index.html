@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400..560&family=Sora:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <script>document.documentElement.className += " js df-anim";</script>
-  <link rel="stylesheet" href="css/premium.css?v=2" />
+  <link rel="stylesheet" href="css/premium.css?v=3" />
   <link rel="stylesheet" href="css/enhance.css?v=2" />
   <link rel="stylesheet" href="css/couture.css?v=6" />
   <script type="application/ld+json">
@@ -68,18 +68,20 @@
         <span class="brand-mark" id="brandMark"><img src="img/logo.png" alt="Diamond Flame" /></span>
         <span class="brand-text"><strong>Diamond&nbsp;Flame</strong><small>Premium Home Appliances</small></span>
       </a>
-      <nav class="nav" aria-label="Primary">
+      <nav class="nav" id="primaryNav" aria-label="Primary">
         <a href="#collections">Categories</a>
         <a href="#catalogue">Shop</a>
         <a href="#why">Why us</a>
         <a href="#reviews">Reviews</a>
         <a href="admin.html">Dealer</a>
+        <a href="#" class="nav-auth" id="navAuth">Sign in</a>
       </nav>
       <div class="header-actions">
         <button class="icon-btn" id="authBtn" aria-label="Account">Sign in</button>
         <button class="icon-btn cart-btn magnetic" id="cartBtn" aria-label="Open your order">
           <span aria-hidden="true">🛍</span><span class="cart-count" id="cartCount">0</span>
         </button>
+        <button class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false" aria-controls="primaryNav"><i></i><i></i><i></i></button>
       </div>
     </div>
   </header>
@@ -383,7 +385,7 @@
   <script src="js/config.js" defer></script>
   <script src="js/core.js" defer></script>
   <script src="js/store.js?v=5" defer></script>
-  <script src="js/premium.js" defer></script>
+  <script src="js/premium.js?v=2" defer></script>
   <script src="js/enhance.js?v=2" defer></script>
   <script src="js/reviews.js?v=3" defer></script>
   <script src="js/chat.js?v=2" defer></script>
