@@ -33,13 +33,19 @@ img{max-width:100%;display:block}
 .cart-btn{position:relative;background:none;border:1px solid var(--line);color:var(--ink);
   width:42px;height:42px;border-radius:50%;cursor:pointer;font-size:16px;transition:border-color .2s}
 .cart-btn:hover{border-color:var(--gold)}
+.cart-icon{width:19px;height:19px;color:var(--ink)}
+.cart-btn:hover .cart-icon{color:var(--gold-soft)}
 .cart-count{position:absolute;top:-6px;right:-6px;background:var(--gold);color:#1a1408;
   font-size:11px;font-weight:600;min-width:18px;height:18px;border-radius:9px;display:grid;place-items:center;padding:0 4px}
 
 /* Hero */
-.hero{position:relative;padding:104px 0 92px;text-align:center;
-  background:radial-gradient(900px 460px at 50% -10%,rgba(200,165,88,.18),transparent 70%)}
-.hero-inner{max-width:720px}
+.hero{position:relative;overflow:hidden;padding:104px 0 92px;text-align:center;background:var(--bg)}
+.hero-bg{position:absolute;inset:0;z-index:0;background:#0d0b10 center/cover no-repeat}
+.hero-bg{background-image:url("../img/hero.jpg")}
+.hero-bg::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(13,11,16,.5),rgba(13,11,16,.82)),
+    radial-gradient(900px 460px at 50% -10%,rgba(200,165,88,.22),transparent 70%)}
+.hero-inner{position:relative;z-index:1;max-width:720px}
 .eyebrow{text-transform:uppercase;letter-spacing:3px;font-size:12px;color:var(--gold);margin:0 0 18px}
 .hero h1{font-size:clamp(42px,7vw,76px)}
 .lead{color:var(--muted);font-size:18px;max-width:540px;margin:20px auto 32px}
@@ -66,6 +72,8 @@ img{max-width:100%;display:block}
 .card:hover{transform:translateY(-4px);border-color:var(--gold)}
 .card-media{aspect-ratio:1/1;display:grid;place-items:center;font-size:64px;
   background:radial-gradient(120% 120% at 30% 20%,rgba(231,211,161,.16),rgba(13,11,16,.2))}
+.card-media .art{width:50%;height:auto;filter:drop-shadow(0 6px 18px rgba(200,165,88,.25))}
+.card:hover .card-media .art{filter:drop-shadow(0 8px 22px rgba(200,165,88,.4))}
 .card-body{padding:18px 18px 20px;display:flex;flex-direction:column;gap:6px;flex:1}
 .card-cat{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gold)}
 .card-name{font-size:21px}
@@ -115,6 +123,7 @@ img{max-width:100%;display:block}
 .cart-row{display:flex;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
 .cart-row .thumb{width:52px;height:52px;border-radius:10px;display:grid;place-items:center;font-size:26px;
   background:radial-gradient(120% 120% at 30% 20%,rgba(231,211,161,.18),rgba(13,11,16,.3));flex:none}
+.cart-row .thumb .art{width:74%;height:auto}
 .cart-row .info{flex:1}
 .cart-row .info strong{font-weight:500;font-size:15px}
 .cart-row .info .unit{color:var(--muted);font-size:13px}
