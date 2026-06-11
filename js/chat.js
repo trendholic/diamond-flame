@@ -17,8 +17,10 @@
   }
   function searchProducts(q) {
     var words = q.toLowerCase().split(/\s+/).filter(function (w) { return w.length > 2; });
-    var map = { hob: "hob", hobs: "hob", stove: "hob", gas: "gas", electric: "electric",
-      sink: "sink", sinks: "sink", basin: "sink", hood: "hood", hoods: "hood", chimney: "hood" };
+    var map = { ac: "air condition", airconditioner: "air condition", inverter: "inverter", cooling: "cool",
+      fridge: "refrigerat", refrigerator: "refrigerat", freezer: "freez", washing: "washing", washer: "washing",
+      laundry: "washing", tv: "televis", television: "televis", led: "televis", fan: "fan", cooler: "cooler",
+      microwave: "microwave", oven: "oven", stove: "stove", geyser: "water", heater: "water" };
     var scored = CATALOG.map(function (p) {
       var hay = ((p.name || "") + " " + (p.category || "") + " " + (p.brand || "")).toLowerCase();
       var score = 0;
@@ -32,7 +34,7 @@
     if (!list.length) return "I couldn't find a match — " + waHtml("our team can help on WhatsApp.");
     return "Here's what I found:<div class='cw-prods'>" + list.map(function (p) {
       var cover = p.image_url || (Array.isArray(p.images) && p.images[0]) || "";
-      var media = cover ? "<img src='" + esc(cover) + "' alt=''>" : "<span class='cw-emoji'>" + esc(p.emoji || "🍳") + "</span>";
+      var media = cover ? "<img src='" + esc(cover) + "' alt=''>" : "<span class='cw-emoji'>" + esc(p.emoji || "📦") + "</span>";
       return "<a class='cw-prod' href='#/p/" + encodeURIComponent(p.id) + "'>" + media +
         "<span><strong>" + esc(p.name) + "</strong><small>" + esc(p.category || "") + " · " + pkr(p.retail_price) + "</small></span></a>";
     }).join("") + "</div>";
@@ -46,21 +48,21 @@
   function respond(text) {
     var t = text.toLowerCase().trim();
     if (/^(hi|hey|hello|salam|asalam|assalam|aoa|good (morning|evening|afternoon))/.test(t))
-      return { html: "Hi! 👋 I'm the Diamond Flame assistant. Ask me about our kitchen <b>sinks, hobs &amp; hoods</b>, or about delivery, payment and warranty.", chips: DEFAULT_CHIPS };
+      return { html: "Hi! 👋 I'm the Diamond Flame assistant. Ask me about <b>ACs, refrigerators, washing machines, TVs</b> and more — or about delivery, payment and warranty.", chips: DEFAULT_CHIPS };
     if (/deliver|ship|dispatch|courier/.test(t))
       return { html: "🚚 We offer <b>insured nationwide delivery within 48 hours</b> of order confirmation, across Pakistan.", chips: DEFAULT_CHIPS };
     if (/pay|cod|cash|bank|transfer|installment/.test(t))
       return { html: "💳 Pay by <b>Cash on Delivery</b> or <b>Bank Transfer</b> (upload your receipt at checkout). Approved dealers can request credit terms.", chips: DEFAULT_CHIPS };
     if (/warrant|guarantee|return/.test(t))
-      return { html: "🛡️ Every product carries a <b>10-year finish warranty</b> against manufacturing defects.", chips: DEFAULT_CHIPS };
-    if (/install|fit|cut.?out/.test(t))
-      return { html: "🛠️ We provide installation guidance and can arrange professional fitting on request — standard cut-out templates are included.", chips: DEFAULT_CHIPS };
+      return { html: "🛡️ Every appliance comes with the <b>official manufacturer warranty</b>. Keep your invoice for any claim.", chips: DEFAULT_CHIPS };
+    if (/install|fit|setup|set up/.test(t))
+      return { html: "🛠️ We offer setup guidance and can arrange professional installation for ACs, geysers and large appliances on request.", chips: DEFAULT_CHIPS };
     if (/dealer|wholesale|trade|bulk/.test(t))
       return { html: "🏷️ Become a verified dealer for wholesale pricing — tap below to apply (approved within 24 hours).", chips: ["Become a dealer", "Talk to a human"] };
     if (/contact|whatsapp|call|phone|human|agent|talk|support|help/.test(t))
       return { html: waHtml("Our team is happy to help directly. 😊"), chips: ["Browse products"] };
     var matches = searchProducts(t);
-    if (matches.length || /product|catalog|sink|hob|hood|chimney|cook|price|buy|show|browse|kitchen/.test(t))
+    if (matches.length || /product|catalog|ac|fridge|refriger|wash|tv|televis|fan|cooler|microwave|oven|stove|geyser|price|buy|show|browse|appliance/.test(t))
       return { html: productListHtml(matches.length ? matches : CATALOG.slice(0, 4)), chips: ["Delivery", "Payment", "Talk to a human"] };
     return { html: waHtml("I'm not totally sure about that one — our team can help directly."), chips: DEFAULT_CHIPS };
   }
@@ -95,7 +97,7 @@
     panel.hidden = !opened;
     document.getElementById("cwFab").classList.toggle("open", opened);
     if (opened && !body.childElementCount) {
-      addMsg("bot", "Hi! 👋 I'm the Diamond Flame assistant. How can I help with your kitchen today?");
+      addMsg("bot", "Hi! 👋 I'm the Diamond Flame assistant. How can I help you today?");
       setChips(DEFAULT_CHIPS);
       if (!CATALOG.length) loadCatalog();
     }

@@ -240,7 +240,7 @@
 
   /* ---------- documents (invoice / ledger / catalogue, print-to-PDF) ---------- */
   var COMPANY = {
-    name: "Diamond Flame", tagline: "Premium Kitchen Fittings",
+    name: "Diamond Flame", tagline: "Premium Home Appliances",
     address: "Model Town, Gujranwala, Pakistan", email: "sales@diamond-flame.com"
   };
   function waNumber() { return (DF.cfg && DF.cfg.WHATSAPP) ? DF.cfg.WHATSAPP : ""; }
@@ -671,15 +671,42 @@
     if (out.description) out.description = out.description.trim().slice(0, 400);
     return out;
   }
-  // Several public CORS proxies; we try each until one returns usable HTML.
+  // Several fetch sources, tried in order until one returns usable data.
+  // `reader: true` sources return rendered markdown (great for bot-blocked sites).
   function importProxies(u) {
     var list = [];
-    if (DF.cfg && DF.cfg.IMPORT_PROXY) list.push(DF.cfg.IMPORT_PROXY + encodeURIComponent(u));
-    list.push("https://api.allorigins.win/raw?url=" + encodeURIComponent(u));
-    list.push("https://corsproxy.io/?url=" + encodeURIComponent(u));
-    list.push("https://api.codetabs.com/v1/proxy/?quest=" + encodeURIComponent(u));
-    list.push("https://thingproxy.freeboard.io/fetch/" + u);
+    if (DF.cfg && DF.cfg.IMPORT_PROXY) list.push({ url: DF.cfg.IMPORT_PROXY + encodeURIComponent(u) });
+    list.push({ url: "https://api.allorigins.win/raw?url=" + encodeURIComponent(u) });
+    list.push({ url: "https://api.allorigins.win/get?url=" + encodeURIComponent(u) });
+    list.push({ url: "https://corsproxy.io/?url=" + encodeURIComponent(u) });
+    list.push({ url: "https://api.codetabs.com/v1/proxy/?quest=" + encodeURIComponent(u) });
+    list.push({ url: "https://thingproxy.freeboard.io/fetch/" + u });
+    // Jina AI Reader renders the page server-side (bypasses most bot blocks).
+    list.push({ url: "https://r.jina.ai/" + u, reader: true });
     return list;
+  }
+  // fetch text with an abort timeout so a dead source fails fast.
+  function fetchText(url, ms) {
+    var ctrl = ("AbortController" in window) ? new AbortController() : null;
+    var to = ctrl ? setTimeout(function () { ctrl.abort(); }, ms || 10000) : null;
+    return fetch(url, ctrl ? { signal: ctrl.signal } : {}).then(function (r) {
+      if (to) clearTimeout(to);
+      if (!r.ok) throw new Error("status " + r.status);
+      return r.text();
+    });
+  }
+  // Parse Jina reader markdown (Title:/Markdown Content:/![](img)/price text).
+  function parseReader(text) {
+    var out = {}, t = text || "";
+    var mt = t.match(/^Title:\s*(.+)$/m); if (mt) out.name = mt[1].trim().slice(0, 120);
+    var mi = t.match(/!\[[^\]]*\]\((https?:\/\/[^)\s]+)\)/); if (mi) out.image = mi[1];
+    var mp = t.match(/(?:Rs\.?|PKR|₨|\$)\s?([\d,]{2,})(?:\.\d{1,2})?/i);
+    if (mp) { var n = parseFloat(mp[1].replace(/,/g, "")); if (isFinite(n) && n > 0) out.price = n; }
+    var body = t.split(/Markdown Content:/i).pop();
+    var lines = body.split(/\n+/).map(function (s) { return s.trim(); })
+      .filter(function (s) { return s && "#!|>".indexOf(s.charAt(0)) === -1 && s.length > 40; });
+    if (lines.length) out.description = lines[0].replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").slice(0, 400);
+    return out;
   }
   // Accept either raw HTML or a JSON-wrapped payload ({contents:"..."}).
   function extractHtml(text) {
@@ -716,22 +743,25 @@
 
     function attempt(i) {
       if (i >= proxies.length) {
-        status.textContent = "Couldn't read that page automatically — it may block bots or have no product data. Please fill the fields manually.";
+        status.textContent = "Couldn't auto-read that page (the site may block bots). Try a different product link, or just fill the fields in below — it only takes a moment.";
         return;
       }
-      status.textContent = "Fetching…" + (i ? " (source " + (i + 1) + ")" : "");
-      fetch(proxies[i]).then(function (r) {
-        if (!r.ok) throw new Error("status " + r.status);
-        return r.text();
-      }).then(function (text) {
-        var html = extractHtml(text);
-        if (!looksLikeHtml(html)) throw new Error("blocked");
-        var d = parseProduct(html);
+      var px = proxies[i];
+      status.textContent = "Fetching…" + (i ? " (source " + (i + 1) + " of " + proxies.length + ")" : "");
+      fetchText(px.url, px.reader ? 20000 : 10000).then(function (text) {
+        var d;
+        if (px.reader) {
+          d = parseReader(text);
+        } else {
+          var html = extractHtml(text);
+          if (!looksLikeHtml(html)) throw new Error("blocked");
+          d = parseProduct(html);
+        }
         if (!d.name && !d.image && !d.price) throw new Error("no data");
         var got = applyData(d);
         status.textContent = got.length
-          ? "Imported: " + got.join(", ") + ". Review, set wholesale + category, then Save."
-          : "Page read, but no product fields found — fill them in manually.";
+          ? "✓ Imported: " + got.join(", ") + ". Review, set wholesale price + category, then Save."
+          : "Page read, but no product fields found — please fill them in manually.";
       }).catch(function () { attempt(i + 1); });
     }
     attempt(0);
