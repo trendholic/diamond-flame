@@ -149,11 +149,13 @@
     }
 
     // favicon is shipped with the site (img/logo.png) — not overridden from settings.
-    if (s.banner_url && el("promoBanner")) {
-      el("promoImg").src = s.banner_url;
-      if (s.banner_link) el("promoLink").setAttribute("href", s.banner_link);
-      el("promoBanner").hidden = false;
-    }
+    // Promo banner is disabled to keep the storefront clean (the stored banner was a
+    // placeholder). To run a real promo, re-enable this block and set banner_url in admin.
+    // if (s.banner_url && el("promoBanner")) {
+    //   el("promoImg").src = s.banner_url;
+    //   if (s.banner_link) el("promoLink").setAttribute("href", s.banner_link);
+    //   el("promoBanner").hidden = false;
+    // }
     Array.prototype.forEach.call(document.querySelectorAll(".collection-card[data-cat]"), function (card) {
       var u = s["col:" + card.getAttribute("data-cat")];
       if (u) { card.style.backgroundImage = "linear-gradient(180deg,rgba(11,13,18,.05),rgba(11,13,18,.55)),url('" + u + "')"; card.classList.add("has-img"); }
