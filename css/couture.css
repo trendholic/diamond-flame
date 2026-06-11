@@ -22,8 +22,19 @@ body{font-feature-settings:"liga" 1,"calt" 1}
 .sec-head p{font-size:18px;line-height:1.65}
 
 /* ---------- Announcement & header: refined, tracked ---------- */
-.announce{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase}
-.announce-row{opacity:.82;gap:42px;padding:11px 24px}
+.announce{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;
+  border-bottom:1px solid rgba(202,160,106,.32);overflow:hidden}
+.announce-viewport{overflow:hidden}
+.announce-marquee{display:flex;width:max-content;animation:announceSlide 34s linear infinite}
+.announce-track{display:flex;align-items:center;gap:48px;padding:10px 0 10px 48px;flex:0 0 auto;
+  white-space:nowrap;opacity:.84}
+.announce:hover .announce-marquee{animation-play-state:paused}
+@keyframes announceSlide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media(prefers-reduced-motion:reduce){
+  .announce-marquee{animation:none;width:100%;justify-content:center;flex-wrap:wrap;gap:0}
+  .announce-track[aria-hidden="true"]{display:none}
+  .announce-track{padding:11px 24px}
+}
 .site-header{background:rgba(250,248,243,.78)}
 .header-inner{height:78px}
 .brand-text strong{letter-spacing:.01em}
@@ -122,7 +133,7 @@ body{font-feature-settings:"liga" 1,"calt" 1}
 /* ---------- Responsive type easing ---------- */
 @media(max-width:720px){
   .nav{gap:20px}
-  .announce-row{gap:20px;letter-spacing:.1em}
+  .announce-track{gap:32px;padding-left:32px;letter-spacing:.1em}
   .hero{padding:60px 0 70px}
 }
 
