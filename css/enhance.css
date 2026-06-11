@@ -1,0 +1,87 @@
+/* ============================================================
+   Diamond Flame — expert motion & polish layer (additive only)
+   Loads after premium.css. Every effect degrades gracefully:
+   - gated behind html.df-anim (set only when JS is enabled)
+   - fully disabled under prefers-reduced-motion
+   ============================================================ */
+
+/* ---------- 1. Opening preloader (the "curtain") ---------- */
+.df-preloader{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;
+  background:radial-gradient(1000px 700px at 50% 38%,#ffffff,#eef1f6);
+  transition:opacity .8s cubic-bezier(.4,0,.2,1),visibility .8s}
+.df-pre-inner{display:flex;flex-direction:column;align-items:center;gap:20px}
+.df-pre-mark{font-size:66px;line-height:1;filter:drop-shadow(0 16px 34px rgba(47,107,255,.4));
+  animation:dfPreFloat 2.4s ease-in-out infinite}
+.df-pre-word{font-family:'Sora',sans-serif;font-weight:800;letter-spacing:-.02em;font-size:25px}
+.df-pre-word span{background:linear-gradient(100deg,#0b0d12 0 38%,#6aa0ff 50%,#0b0d12 62% 100%);
+  background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:dfShine 1.8s linear infinite}
+.df-pre-bar{position:relative;width:172px;height:3px;border-radius:3px;background:var(--silver);overflow:hidden}
+.df-pre-bar i{position:absolute;top:0;left:0;height:100%;width:42%;border-radius:3px;
+  background:linear-gradient(90deg,var(--accent),var(--accent-2));animation:dfLoad 1.15s cubic-bezier(.6,.05,.25,1) infinite}
+.df-pre-sub{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--muted)}
+.df-preloader.done{opacity:0;visibility:hidden;pointer-events:none}
+/* failsafe — never trap the user behind the curtain even if JS stalls */
+.df-preloader{animation:dfPreFailsafe .01s linear 3.5s forwards}
+@keyframes dfPreFailsafe{to{opacity:0;visibility:hidden;pointer-events:none}}
+@keyframes dfPreFloat{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-11px) scale(1.04)}}
+@keyframes dfLoad{0%{left:-45%}100%{left:105%}}
+@keyframes dfShine{to{background-position:-220% 0}}
+
+/* ---------- 2. Scroll progress bar ---------- */
+.df-progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:9998;transform:scaleX(0);transform-origin:0 50%;
+  background:linear-gradient(90deg,var(--accent),var(--accent-2),#9bc0ff);box-shadow:0 0 14px rgba(47,107,255,.55);
+  will-change:transform}
+
+/* ---------- 3. Choreographed hero entrance ---------- */
+html.df-anim .hero-copy>*{opacity:0;transform:translateY(26px);
+  transition:opacity .85s cubic-bezier(.2,.7,.2,1),transform .85s cubic-bezier(.2,.7,.2,1)}
+html.df-anim .hero-visual{opacity:0;transform:translateY(34px) scale(.97);
+  transition:opacity 1s cubic-bezier(.2,.7,.2,1),transform 1s cubic-bezier(.2,.7,.2,1)}
+html.df-ready .hero-copy>*{opacity:1;transform:none}
+html.df-ready .hero-visual{opacity:1;transform:none;transition-delay:.18s}
+html.df-ready .hero-copy>*:nth-child(1){transition-delay:.04s}
+html.df-ready .hero-copy>*:nth-child(2){transition-delay:.12s}
+html.df-ready .hero-copy>*:nth-child(3){transition-delay:.2s}
+html.df-ready .hero-copy>*:nth-child(4){transition-delay:.28s}
+html.df-ready .hero-copy>*:nth-child(5){transition-delay:.36s}
+
+/* ---------- 4. Cascade reveals (cards fan in) ---------- */
+html.df-anim .df-cascade>*{opacity:0;transform:translateY(24px);
+  transition:opacity .65s cubic-bezier(.2,.7,.2,1),transform .65s cubic-bezier(.2,.7,.2,1)}
+html.df-anim .df-cascade.df-in>*{opacity:1;transform:none}
+.df-cascade.df-in>*:nth-child(1){transition-delay:.05s}
+.df-cascade.df-in>*:nth-child(2){transition-delay:.12s}
+.df-cascade.df-in>*:nth-child(3){transition-delay:.19s}
+.df-cascade.df-in>*:nth-child(4){transition-delay:.26s}
+.df-cascade.df-in>*:nth-child(5){transition-delay:.33s}
+.df-cascade.df-in>*:nth-child(6){transition-delay:.4s}
+
+/* ---------- 5. Living hero: orb drift + animated headline shine ---------- */
+html.df-anim .orb-a{animation:dfDriftA 13s ease-in-out infinite}
+html.df-anim .orb-b{animation:dfDriftB 16s ease-in-out infinite}
+@keyframes dfDriftA{0%,100%{transform:translate(0,0)}50%{transform:translate(-18px,16px)}}
+@keyframes dfDriftB{0%,100%{transform:translate(0,0)}50%{transform:translate(16px,-14px)}}
+html.df-anim .grad{background-size:220% 100%;animation:dfGradShine 7s ease-in-out infinite}
+@keyframes dfGradShine{0%,100%{background-position:0 50%}50%{background-position:100% 50%}}
+
+/* ---------- 6. Premium button sheen ---------- */
+.btn-primary{position:relative;overflow:hidden;isolation:isolate}
+.btn-primary::after{content:"";position:absolute;top:0;bottom:0;left:-70%;width:45%;z-index:-1;
+  background:linear-gradient(120deg,transparent,rgba(255,255,255,.5),transparent);
+  transform:skewX(-20deg);pointer-events:none}
+html.df-anim .btn-primary:hover::after{animation:dfSheen .85s ease}
+@keyframes dfSheen{from{left:-70%}to{left:130%}}
+
+/* ---------- 7. Subtle 3D tilt (non-magnetic cards only) ---------- */
+.df-tilt{transform-style:preserve-3d;transition:transform .3s cubic-bezier(.2,.7,.2,1),box-shadow .3s;will-change:transform}
+
+/* ---------- 8. Reduced-motion: strip all motion ---------- */
+@media (prefers-reduced-motion:reduce){
+  .df-pre-mark,.df-pre-word span,.df-pre-bar i,.orb-a,.orb-b,.grad{animation:none !important}
+  .df-preloader{animation:none !important;transition:opacity .2s}
+  html.df-anim .hero-copy>*,html.df-anim .hero-visual,
+  html.df-anim .df-cascade>*{opacity:1 !important;transform:none !important;transition:none !important}
+  .df-tilt{transition:none !important}
+  .df-progress{display:none}
+}

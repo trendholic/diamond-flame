@@ -14,8 +14,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
-  <script>document.documentElement.className += " js";</script>
+  <script>document.documentElement.className += " js df-anim";</script>
   <link rel="stylesheet" href="css/premium.css" />
+  <link rel="stylesheet" href="css/enhance.css" />
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -31,6 +32,17 @@
   </script>
 </head>
 <body>
+  <!-- Opening curtain (lifts on first visit, once per session) -->
+  <div class="df-preloader" id="dfPreloader" role="presentation" aria-hidden="true">
+    <div class="df-pre-inner">
+      <div class="df-pre-mark">🔥</div>
+      <div class="df-pre-word"><span>Diamond&nbsp;Flame</span></div>
+      <div class="df-pre-bar"><i></i></div>
+      <div class="df-pre-sub">Premium Kitchen Fittings</div>
+    </div>
+  </div>
+  <div class="df-progress" id="dfProgress" aria-hidden="true"></div>
+
   <div class="announce">
     <div class="container announce-row">
       <span>✦ Free installation guidance</span>
@@ -370,6 +382,7 @@
   <script src="js/core.js" defer></script>
   <script src="js/store.js" defer></script>
   <script src="js/premium.js" defer></script>
+  <script src="js/enhance.js" defer></script>
   <script src="js/chat.js" defer></script>
 </body>
 </html>
