@@ -9,7 +9,9 @@
 .df-preloader{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;
   background:radial-gradient(1000px 700px at 50% 38%,#fdfbf6,#efe8dc);
   transition:opacity .8s cubic-bezier(.4,0,.2,1),visibility .8s}
-.df-pre-inner{display:flex;flex-direction:column;align-items:center;gap:20px}
+.df-pre-inner{display:flex;flex-direction:column;align-items:center;gap:22px}
+.df-pre-logo{width:158px;height:auto;display:block;filter:drop-shadow(0 18px 40px rgba(48,36,18,.22));
+  animation:dfPreFloat 2.6s ease-in-out infinite}
 .df-pre-mark{font-size:66px;line-height:1;filter:drop-shadow(0 16px 34px rgba(168,115,56,.4));
   animation:dfPreFloat 2.4s ease-in-out infinite}
 .df-pre-word{font-family:'Sora',sans-serif;font-weight:800;letter-spacing:-.02em;font-size:25px}
@@ -78,7 +80,7 @@ html.df-anim .btn-primary:hover::after{animation:dfSheen .85s ease}
 
 /* ---------- 8. Reduced-motion: strip all motion ---------- */
 @media (prefers-reduced-motion:reduce){
-  .df-pre-mark,.df-pre-word span,.df-pre-bar i,.orb-a,.orb-b,.grad{animation:none !important}
+  .df-pre-mark,.df-pre-logo,.df-pre-word span,.df-pre-bar i,.orb-a,.orb-b,.grad{animation:none !important}
   .df-preloader{animation:none !important;transition:opacity .2s}
   html.df-anim .hero-copy>*,html.df-anim .hero-visual,
   html.df-anim .df-cascade>*{opacity:1 !important;transform:none !important;transition:none !important}
