@@ -5,7 +5,11 @@
 
   var STORAGE_KEY = "diamondflame.cart.v1";
   var products = window.PRODUCTS || [];
+  var ART = window.DF_ART || {};
   var cart = loadCart();
+
+  // Bespoke SVG illustration for a product, falling back to its emoji.
+  function artFor(p) { return ART[p.id] || p.emoji || ""; }
 
   // ---- helpers ----
   function loadCart() {
@@ -54,7 +58,7 @@
         var card = document.createElement("article");
         card.className = "card";
         card.innerHTML =
-          '<div class="card-media">' + p.emoji + '</div>' +
+          '<div class="card-media">' + artFor(p) + '</div>' +
           '<div class="card-body">' +
             '<span class="card-cat">' + p.category + '</span>' +
             '<h3 class="card-name">' + p.name + '</h3>' +
@@ -102,7 +106,7 @@
       var row = document.createElement("div");
       row.className = "cart-row";
       row.innerHTML =
-        '<div class="thumb">' + p.emoji + '</div>' +
+        '<div class="thumb">' + artFor(p) + '</div>' +
         '<div class="info">' +
           '<strong>' + p.name + '</strong><br>' +
           '<span class="unit">' + pkr(p.price) + '</span>' +
