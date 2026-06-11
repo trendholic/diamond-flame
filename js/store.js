@@ -15,6 +15,30 @@
   var query = "";
   var detailProduct = null, detailVariant = "", detailQty = 1;
   var heroTimer = null; // hero-slide crossfade interval (guarded so re-applying settings can't stack timers)
+  var lastSettings = {}; // latest branding settings, so dynamic category cards can pick up their images
+
+  // Emoji per category for the homepage cards. Unknown categories fall back to a
+  // keyword guess, so adding a brand-new category in admin "just works".
+  var CAT_EMOJI = {
+    "Gas Hobs": "🔥", "Electric Hobs": "♨️", "Kitchen Hobs": "🔥", "Hobs": "🔥",
+    "Range Hoods": "🌀", "Kitchen Hoods": "🌀", "Hoods": "🌀", "Chimneys": "🌀",
+    "Kitchen Sinks": "🚰", "Sinks": "🚰",
+    "Cooling Fans": "💨", "Fans": "💨", "Ceiling Fans": "💨",
+    "Heaters": "♨️", "Electric Heating": "♨️", "Room Heaters": "♨️",
+    "Instant Geysers": "🚿", "Geysers": "🚿", "Water Heaters": "🚿", "Water Heating": "🚿", "Water": "🚿"
+  };
+  function catEmoji(cat) {
+    if (CAT_EMOJI[cat]) return CAT_EMOJI[cat];
+    var l = (cat || "").toLowerCase();
+    if (/hob|stove|cook|burner/.test(l)) return "🔥";
+    if (/hood|chimney|extract/.test(l)) return "🌀";
+    if (/sink|basin/.test(l)) return "🚰";
+    if (/geyser|water|heat/.test(l)) return "🚿";
+    if (/fan|cool|air/.test(l)) return "💨";
+    if (/glass/.test(l)) return "🪟";
+    if (/steel/.test(l)) return "🍳";
+    return "🔥";
+  }
 
   function loadCart() {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
@@ -46,6 +70,7 @@
       products = res.data || [];
       el("statCount").textContent = products.length;
       renderFilters();
+      renderCollections();
       renderGrid();
       updateCartUI();
       updateDealerHint();
@@ -114,6 +139,8 @@
     });
   }
   function applySettings(s) {
+    lastSettings = s || {};
+    renderCollections(); // re-apply category-card images if products are already loaded
     // NOTE: the site ships with the official Diamond Flame emblem (img/logo.png)
     // wired into the header, opening screen, footer and favicon. We intentionally
     // do NOT override it from the admin logo_url/favicon_url so the brand mark stays
@@ -186,6 +213,45 @@
     });
   }
 
+  // Homepage category cards — generated from the live catalogue, so adding a
+  // product under a new category automatically adds a card here (and a filter).
+  function renderCollections() {
+    var grid = el("collectionGrid");
+    if (!grid) return;
+    var cats = categories().filter(function (c) { return c !== "All"; });
+    if (!cats.length) {
+      grid.innerHTML = '<p class="loading">Categories appear here automatically as products are added.</p>';
+      return;
+    }
+    grid.innerHTML = "";
+    cats.forEach(function (cat) {
+      var count = products.filter(function (p) { return p.category === cat; }).length;
+      var a = document.createElement("a");
+      a.className = "collection-card glass-card";
+      a.href = "#catalogue";
+      a.setAttribute("data-cat", cat);
+      a.innerHTML =
+        '<span class="cc-emoji">' + catEmoji(cat) + "</span>" +
+        "<h3>" + esc(cat) + "</h3>" +
+        "<p>" + count + (count === 1 ? " product" : " products") + "</p>" +
+        '<span class="cc-go">Shop →</span>';
+      var img = lastSettings["col:" + cat];
+      if (img) {
+        a.style.backgroundImage = "linear-gradient(180deg,rgba(11,13,18,.05),rgba(11,13,18,.55)),url('" + img + "')";
+        a.classList.add("has-img");
+      }
+      a.addEventListener("click", function (e) {
+        e.preventDefault();
+        activeCat = cat;
+        renderFilters();
+        renderGrid();
+        var t = el("catalogue");
+        if (t) t.scrollIntoView({ behavior: "smooth" });
+      });
+      grid.appendChild(a);
+    });
+  }
+
   function visibleProducts() {
     var q = query.trim().toLowerCase();
     return products.filter(function (p) {
@@ -241,7 +307,7 @@
       card.innerHTML =
         '<div class="card-media">' + mediaInner(p) + "</div>" +
         '<div class="card-body">' +
-          '<span class="card-brand">' + (p.brand ? esc(p.brand) + " · " : "") + esc(p.category) + "</span>" +
+          '<span class="card-brand">' + esc(p.category || "") + "</span>" +
           '<h3 class="card-name">' + esc(p.name) + "</h3>" +
           '<p class="card-desc">' + esc(p.description || "") + "</p>" +
           variantPick +
@@ -432,7 +498,7 @@
       '<div class="pd-grid">' +
         mediaCol +
         '<div class="pd-info">' +
-          '<span class="pd-eyebrow">' + (p.brand ? esc(p.brand) + " · " : "") + esc(p.category) + "</span>" +
+          '<span class="pd-eyebrow">' + esc(p.category || "") + "</span>" +
           '<h1 class="pd-name">' + esc(p.name) + "</h1>" +
           '<div class="pd-rating"><span class="stars">★★★★★</span> <span>Trusted by 5,000+ homes</span></div>' +
           '<div class="pd-price" id="pdPrice"></div>' +
