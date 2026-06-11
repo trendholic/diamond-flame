@@ -18,7 +18,7 @@
   <script>document.documentElement.className += " js df-anim";</script>
   <link rel="stylesheet" href="css/premium.css?v=2" />
   <link rel="stylesheet" href="css/enhance.css?v=2" />
-  <link rel="stylesheet" href="css/couture.css?v=3" />
+  <link rel="stylesheet" href="css/couture.css?v=4" />
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -112,12 +112,26 @@
 
   <!-- TRUST STRIP -->
   <section class="trust-strip" data-reveal>
+    <div class="trust-sheen" aria-hidden="true"></div>
     <div class="container trust-row">
-      <div class="trust-item"><strong id="statCount">—</strong><span>premium products</span></div>
-      <div class="trust-item"><strong>100%</strong><span>made in-house</span></div>
-      <div class="trust-item"><strong>48h</strong><span>nationwide dispatch</span></div>
-      <div class="trust-item"><strong>Free</strong><span>fitting guidance</span></div>
+      <div class="trust-feature">
+        <span class="tf-icon">🏭</span>
+        <span class="tf-text"><strong>Crafted in-house</strong><small>Designed &amp; built by Diamond Flame</small></span>
+      </div>
+      <div class="trust-feature">
+        <span class="tf-icon">🛡️</span>
+        <span class="tf-text"><strong>Brand warranty</strong><small>Honoured nationwide</small></span>
+      </div>
+      <div class="trust-feature">
+        <span class="tf-icon">🚚</span>
+        <span class="tf-text"><strong>48-hour dispatch</strong><small>Insured delivery</small></span>
+      </div>
+      <div class="trust-feature">
+        <span class="tf-icon">🛠️</span>
+        <span class="tf-text"><strong>Free fitting guidance</strong><small>Expert support</small></span>
+      </div>
     </div>
+    <span id="statCount" hidden></span>
   </section>
 
   <!-- COLLECTIONS (rendered dynamically from the live catalogue categories) -->
