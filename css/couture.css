@@ -1,0 +1,105 @@
+/* ============================================================
+   Diamond Flame — "Couture" design-system layer
+   A high-end brand finish over the storefront: editorial serif
+   display, architectural surfaces, warm light, generous space.
+   Loads last; purely presentational, no structural changes.
+   ============================================================ */
+
+/* ---------- Editorial display typography ---------- */
+.hero h1,.sec-head h2,.story-copy h2,.cta-text h2,.pd-name,.pd-rev-title,.auth-head h3,.done h3{
+  font-family:'Fraunces','Sora',Georgia,serif;font-optical-sizing:auto;font-weight:480;
+  letter-spacing:-.01em;line-height:1.06}
+.hero h1{font-size:clamp(52px,7.2vw,94px);font-weight:430}
+.hero h1 .grad{font-style:italic;font-weight:460}      /* serif italic accent word — couture signature */
+.sec-head h2{font-size:clamp(32px,4.4vw,52px)}
+.story-copy h2{font-size:clamp(30px,3.9vw,46px)}
+body{font-feature-settings:"liga" 1,"calt" 1}
+
+/* ---------- Eyebrows: gold rule + fine tracking ---------- */
+.eyebrow{display:inline-flex;align-items:center;gap:11px;color:var(--accent-ink);
+  font-size:11px;letter-spacing:3px}
+.eyebrow::before{content:"";width:28px;height:1px;background:var(--accent);display:inline-block;opacity:.8}
+.sec-head p{font-size:18px;line-height:1.65}
+
+/* ---------- Announcement & header: refined, tracked ---------- */
+.announce{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase}
+.announce-row{opacity:.82;gap:42px;padding:11px 24px}
+.site-header{background:rgba(250,248,243,.78)}
+.header-inner{height:78px}
+.brand-text strong{letter-spacing:.01em}
+.brand-text small{letter-spacing:.18em;text-transform:uppercase;font-size:9.5px;color:var(--muted)}
+.nav{gap:34px;font-size:11.5px;letter-spacing:.15em;text-transform:uppercase;font-weight:600}
+.nav a{color:var(--charcoal)}
+
+/* ---------- Architectural buttons: espresso + champagne ---------- */
+.btn{border-radius:11px;font-size:14px;letter-spacing:.02em;padding:15px 30px}
+.btn-primary{background:var(--ink);color:#f7f3ea;border:1px solid var(--ink);
+  box-shadow:0 12px 28px rgba(48,36,18,.20)}
+.btn-primary:hover{background:#0a0805;box-shadow:0 18px 38px rgba(48,36,18,.28)}
+.btn-ghost{background:transparent;border:1px solid var(--silver);color:var(--ink)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent-ink)}
+.icon-btn{border-radius:10px;letter-spacing:.02em}
+.cart-btn{border-radius:12px}
+.pill{background:rgba(168,115,56,.07);border-color:rgba(168,115,56,.24);color:var(--accent-ink);
+  letter-spacing:.12em;text-transform:uppercase;font-size:10.5px;padding:9px 16px}
+
+/* ---------- Generous, editorial spacing ---------- */
+.hero{padding:96px 0 108px}
+.collections{padding:104px 0}
+.why{padding:104px 0}
+.story{padding:112px 0}
+.reviews{padding:100px 0}
+.sec-head{margin-bottom:46px}
+
+/* ---------- Warm surfaces (replace cool gradients) ---------- */
+.hero-product{background:linear-gradient(160deg,#fffdf8,#f0eadf)}
+.story-visual{background:linear-gradient(160deg,#f0eadf,#fffdf8)}
+.card-media,.media-emoji ~ *,.pd-media{background:linear-gradient(160deg,#fbf8f2,#eee7da)}
+.card-media{background:linear-gradient(160deg,#fbf8f2,#eee7da)}
+.drawer-row .thumb,.cw-prod img,.cw-prod .cw-emoji{background:linear-gradient(160deg,#fbf8f2,#eee7da)}
+.why-card span{background:linear-gradient(160deg,#fffdf8,#f0eadf)}
+
+/* ---------- Refined cards ---------- */
+.card,.collection-card,.why-card,.review-card,.glass-card{border-radius:14px}
+.collection-card:hover,.card:hover{transform:translateY(-6px)}
+.card-name{letter-spacing:-.01em}
+.chip{border-radius:9px;letter-spacing:.02em}
+.chip.active{background:var(--ink);border-color:var(--ink)}
+.search{border-radius:11px}
+
+/* ---------- Trust strip: serif numerals ---------- */
+.trust-strip{background:linear-gradient(180deg,#f4efe6,#efe8dc)}
+.trust-item strong{font-family:'Fraunces',serif;font-weight:430;font-size:40px;letter-spacing:-.01em}
+.trust-item span{letter-spacing:.04em;font-size:12.5px;text-transform:uppercase;color:var(--muted)}
+
+/* ---------- Story list ticks in gold ---------- */
+.story-list li::before{content:"—";color:var(--accent)}
+
+/* ---------- Reviews & awards ---------- */
+.review-card blockquote{font-family:'Fraunces',Georgia,serif;font-weight:430;font-size:19px;line-height:1.55;font-style:italic;color:var(--ink)}
+.awards span{letter-spacing:.04em}
+
+/* ---------- Dealer CTA band: warm espresso + gold hairline ---------- */
+.cta-inner{background:linear-gradient(135deg,#1a160e,#2c2316);border:1px solid rgba(202,160,106,.22)}
+.cta-text h2{color:#fbf7ee}
+.cta-band .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#1a160e;border:none;
+  box-shadow:0 14px 30px rgba(168,115,56,.4)}
+.cta-band .btn-primary:hover{box-shadow:0 18px 40px rgba(168,115,56,.5)}
+
+/* ---------- Footer polish ---------- */
+.site-footer{background:#16130d}
+.site-footer h4{letter-spacing:.16em}
+
+/* ---------- Product detail refinements ---------- */
+.pd-now{font-family:'Fraunces',serif;font-weight:480}
+.wholesale{font-family:'Fraunces',serif;font-weight:480}
+
+/* ---------- Selection + focus accents ---------- */
+::selection{background:rgba(168,115,56,.18);color:var(--ink)}
+
+/* ---------- Responsive type easing ---------- */
+@media(max-width:720px){
+  .nav{gap:20px}
+  .announce-row{gap:20px;letter-spacing:.1em}
+  .hero{padding:60px 0 70px}
+}
