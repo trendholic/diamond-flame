@@ -72,6 +72,8 @@
       renderFilters();
       renderCollections();
       renderGrid();
+      pruneCompare();      // drop any saved compare items no longer in the catalogue
+      renderCompareBar();
       updateCartUI();
       updateDealerHint();
       handleRoute(); // open detail if the URL points at a product
@@ -314,7 +316,10 @@
           '<div class="price-row"></div>' +
           '<div class="card-foot">' +
             (hasWholesale(p) ? '<span class="moq">MOQ ' + p.moq + "</span>" : '<span class="moq">Retail</span>') +
-            '<button class="add-btn">Add to order</button>' +
+            '<div class="card-actions">' +
+              '<button class="cmp-btn" type="button" data-cmp="' + esc(p.id) + '" aria-pressed="false" aria-label="Add to compare" title="Add to compare">' + cmpIcon() + "</button>" +
+              '<button class="add-btn">Add to order</button>' +
+            "</div>" +
           "</div>" +
         "</div>";
 
@@ -347,10 +352,15 @@
         e.stopPropagation();
         if (!addBtn.disabled) addToCart(p.id, sel ? sel.value : "");
       });
+      var cmpBtn = card.querySelector(".cmp-btn");
+      if (cmpBtn) {
+        syncCmpBtn(cmpBtn, p.id);
+        cmpBtn.addEventListener("click", function (e) { e.stopPropagation(); toggleCompare(p.id); });
+      }
       // Click the card (anywhere but the controls) to open the detail view.
       card.style.cursor = "pointer";
       card.addEventListener("click", function (e) {
-        if (e.target.closest(".add-btn") || e.target.closest(".variant-select")) return;
+        if (e.target.closest(".add-btn") || e.target.closest(".variant-select") || e.target.closest(".cmp-btn")) return;
         openDetail(p, sel ? sel.value : "");
       });
       grid.appendChild(card);
@@ -850,6 +860,185 @@
     });
   }
 
+  /* ---------- product comparison ---------- */
+  var COMPARE_KEY = "dfha.compare.v1";
+  var compareIds = loadCompare();
+  function loadCompare() {
+    try { var a = JSON.parse(localStorage.getItem(COMPARE_KEY)); return Array.isArray(a) ? a.slice(0, 4) : []; }
+    catch (e) { return []; }
+  }
+  function saveCompare() { try { localStorage.setItem(COMPARE_KEY, JSON.stringify(compareIds)); } catch (e) {} }
+  function cmpIcon() {
+    return '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" ' +
+      'stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M4 8h11M4 8l3-3M4 8l3 3"/><path d="M20 16H9M20 16l-3-3M20 16l-3 3"/></svg>';
+  }
+  function syncCmpBtn(btn, id) {
+    var on = compareIds.indexOf(id) > -1;
+    btn.classList.toggle("active", on);
+    btn.setAttribute("aria-pressed", on ? "true" : "false");
+    btn.title = on ? "Remove from compare" : "Add to compare";
+  }
+  function syncAllCmpBtns() {
+    Array.prototype.forEach.call(document.querySelectorAll("#productGrid .cmp-btn"), function (b) {
+      syncCmpBtn(b, b.getAttribute("data-cmp"));
+    });
+  }
+  function pruneCompare() {
+    var before = compareIds.length;
+    compareIds = compareIds.filter(function (id) { return !!find(id); });
+    if (compareIds.length !== before) saveCompare();
+  }
+  function toggleCompare(id) {
+    var i = compareIds.indexOf(id);
+    if (i > -1) {
+      compareIds.splice(i, 1);
+    } else {
+      if (compareIds.length >= 4) { DF.toast("You can compare up to 4 products. Remove one first.", "warn"); return; }
+      compareIds.push(id);
+    }
+    saveCompare();
+    syncAllCmpBtns();
+    renderCompareBar();
+    var modal = document.getElementById("cmpModal");
+    if (modal && modal.classList.contains("open")) {
+      if (compareIds.length < 2) closeCompare(); else renderCompareTable();
+    }
+  }
+  function clearCompare() {
+    compareIds = [];
+    saveCompare();
+    syncAllCmpBtns();
+    renderCompareBar();
+    closeCompare();
+  }
+  function ensureCompareBar() {
+    if (document.getElementById("cmpBar")) return;
+    var bar = document.createElement("div");
+    bar.id = "cmpBar";
+    bar.className = "cmp-bar";
+    bar.hidden = true;
+    bar.innerHTML =
+      '<div class="container cmp-bar-inner">' +
+        '<div class="cmp-bar-lead"><strong>Compare</strong><span id="cmpHint"></span></div>' +
+        '<div class="cmp-thumbs" id="cmpThumbs"></div>' +
+        '<div class="cmp-bar-actions">' +
+          '<button class="cmp-clear" id="cmpClear" type="button">Clear</button>' +
+          '<button class="btn btn-primary cmp-open-btn" id="cmpOpen" type="button">Compare (<span id="cmpCount">0</span>)</button>' +
+        "</div>" +
+      "</div>";
+    document.body.appendChild(bar);
+    document.getElementById("cmpClear").addEventListener("click", clearCompare);
+    document.getElementById("cmpOpen").addEventListener("click", openCompare);
+  }
+  function renderCompareBar() {
+    ensureCompareBar();
+    var bar = document.getElementById("cmpBar");
+    var thumbs = document.getElementById("cmpThumbs");
+    var n = compareIds.length;
+    document.getElementById("cmpCount").textContent = n;
+    document.getElementById("cmpOpen").disabled = n < 2;
+    document.getElementById("cmpHint").textContent = n < 2 ? "Add " + (2 - n) + " more to compare" : "Ready to compare";
+    thumbs.innerHTML = compareIds.map(function (id) {
+      var p = find(id); if (!p) return "";
+      var cover = coverImage(p);
+      var media = cover ? '<img src="' + esc(cover) + '" alt="' + esc(p.name) + '" />' : '<span class="cmp-emoji">' + esc(p.emoji || "🍳") + "</span>";
+      return '<div class="cmp-thumb" title="' + esc(p.name) + '">' + media +
+        '<button type="button" class="cmp-thumb-x" data-rm="' + esc(id) + '" aria-label="Remove">✕</button></div>';
+    }).join("");
+    Array.prototype.forEach.call(thumbs.querySelectorAll(".cmp-thumb-x"), function (b) {
+      b.addEventListener("click", function () { toggleCompare(b.getAttribute("data-rm")); });
+    });
+    bar.hidden = n === 0;
+    document.body.classList.toggle("cmp-active", n > 0);
+  }
+  function ensureCompareModal() {
+    if (document.getElementById("cmpModal")) return;
+    var ov = document.createElement("div");
+    ov.className = "overlay modal-overlay cmp-overlay";
+    ov.id = "cmpModal";
+    ov.innerHTML =
+      '<div class="modal glass-card cmp-modal" role="dialog" aria-modal="true" aria-label="Compare products">' +
+        '<button class="x modal-x" id="cmpClose" aria-label="Close">✕</button>' +
+        '<h3 class="cmp-title">Compare products</h3>' +
+        '<div id="cmpBody"></div>' +
+      "</div>";
+    document.body.appendChild(ov);
+    document.getElementById("cmpClose").addEventListener("click", closeCompare);
+    ov.addEventListener("click", function (e) { if (e.target === ov) closeCompare(); });
+  }
+  function priceCellHtml(p) {
+    var w = unitPrice(p, null), retail = retailOf(p, null);
+    if (w == null || !isFinite(w)) return "—";
+    if (hasWholesale(p)) {
+      var save = retail > w ? Math.round(100 - (w / retail) * 100) : 0;
+      return "<strong>" + pkr(w) + "</strong><small> dealer/unit</small>" +
+        (save ? '<div class="cmp-old">' + pkr(retail) + " retail</div>" : "");
+    }
+    return "<strong>" + pkr(retail) + "</strong><small> /unit</small>";
+  }
+  function availabilityHtml(p) {
+    var inStock = Number(p.stock || 0) > 0 || variantsOf(p).some(function (v) { return stockOf(p, v) > 0; });
+    return inStock ? '<span class="cmp-yes">In stock</span>' : '<span class="cmp-no">Out of stock</span>';
+  }
+  function renderCompareTable() {
+    var ps = compareIds.map(find).filter(Boolean);
+    var head = '<tr><th class="cmp-corner"></th>' + ps.map(function (p) {
+      var cover = coverImage(p);
+      var media = cover ? '<img src="' + esc(cover) + '" alt="' + esc(p.name) + '" />' : '<span class="cmp-emoji">' + esc(p.emoji || "🍳") + "</span>";
+      return '<td class="cmp-head"><button class="cmp-col-x" data-rm="' + esc(p.id) + '" aria-label="Remove">✕</button>' +
+        '<div class="cmp-head-media">' + media + "</div>" +
+        '<div class="cmp-head-name">' + esc(p.name) + "</div>" +
+        '<button class="btn btn-primary cmp-col-add" data-add="' + esc(p.id) + '">Add to order</button>' +
+        '<button class="cmp-col-view" data-view="' + esc(p.id) + '">View details</button></td>';
+    }).join("") + "</tr>";
+    function row(label, cells) {
+      return '<tr><th class="cmp-rowlabel">' + esc(label) + "</th>" + cells.map(function (c) { return "<td>" + c + "</td>"; }).join("") + "</tr>";
+    }
+    var body =
+      row("Price", ps.map(priceCellHtml)) +
+      row("Category", ps.map(function (p) { return esc(p.category || "—"); })) +
+      row("Brand", ps.map(function (p) { return esc(p.brand || "—"); })) +
+      row("Availability", ps.map(availabilityHtml)) +
+      row("Options", ps.map(function (p) { var vs = variantsOf(p); return vs.length ? esc(vs.map(function (v) { return v.name; }).join(", ")) : "Single option"; })) +
+      row("Min order (dealers)", ps.map(function (p) { return esc(String(p.moq || 1)); })) +
+      row("Warranty", ps.map(function () { return "Official manufacturer warranty"; }));
+    el("cmpBody").innerHTML = '<div class="cmp-table-wrap"><table class="cmp-table"><thead>' + head + "</thead><tbody>" + body + "</tbody></table></div>";
+    var modal = document.getElementById("cmpModal");
+    Array.prototype.forEach.call(modal.querySelectorAll(".cmp-col-x"), function (b) {
+      b.addEventListener("click", function () { toggleCompare(b.getAttribute("data-rm")); });
+    });
+    Array.prototype.forEach.call(modal.querySelectorAll(".cmp-col-add"), function (b) {
+      b.addEventListener("click", function () {
+        var p = find(b.getAttribute("data-add")); if (!p) return;
+        if (variantsOf(p).length) { closeCompare(); openDetail(p, ""); } else { addToCart(p.id, ""); }
+      });
+    });
+    Array.prototype.forEach.call(modal.querySelectorAll(".cmp-col-view"), function (b) {
+      b.addEventListener("click", function () { var p = find(b.getAttribute("data-view")); closeCompare(); if (p) openDetail(p, ""); });
+    });
+  }
+  function openCompare() {
+    if (compareIds.length < 2) { DF.toast("Add at least 2 products to compare.", "warn"); return; }
+    ensureCompareModal();
+    renderCompareTable();
+    document.getElementById("cmpModal").classList.add("open");
+  }
+  function closeCompare() {
+    var m = document.getElementById("cmpModal");
+    if (m) m.classList.remove("open");
+  }
+  function compareInit() {
+    ensureCompareBar();
+    pruneCompare();
+    renderCompareBar();
+    document.addEventListener("keydown", function (e) {
+      if (e.key !== "Escape") return;
+      var m = document.getElementById("cmpModal");
+      if (m && m.classList.contains("open")) closeCompare();
+    });
+  }
+
   /* ---------- wiring ---------- */
   function init() {
     el("year").textContent = new Date().getFullYear();
@@ -858,6 +1047,7 @@
     loadProducts();
     loadSettings();
     refreshAuthUI();
+    compareInit();
 
     el("search").addEventListener("input", function (e) { query = e.target.value; renderGrid(); });
     el("cartBtn").addEventListener("click", openCart);
