@@ -40,26 +40,30 @@
     });
   }
 
-  /* scroll reveal */
-  if ("IntersectionObserver" in window && !reduce) {
-    var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
-      // threshold 0: reveal the moment any part enters — works for very tall
-      // single-column sections on mobile (12% of a tall grid can exceed the
-      // viewport, so the old 0.12 threshold never fired and products stayed hidden).
-    }, { threshold: 0, rootMargin: "0px 0px -8% 0px" });
-    $all("[data-reveal]").forEach(function (el) { io.observe(el); });
-  } else {
-    $all("[data-reveal]").forEach(function (el) { el.classList.add("in"); });
-  }
-  // Failsafe: if anything is still hidden shortly after load (observer missed,
-  // script hiccup), force it visible so content is never permanently invisible.
-  setTimeout(function () {
+  /* scroll reveal — bulletproof: reveal anything whose top enters the viewport.
+     Works for sections taller than the screen (mobile single-column grids) and
+     never leaves content stuck invisible, even if IntersectionObserver misfires. */
+  function revealInView() {
     $all("[data-reveal]:not(.in)").forEach(function (el) {
       var r = el.getBoundingClientRect();
-      if (r.top < window.innerHeight) el.classList.add("in");
+      if (r.bottom > 0 && r.top < window.innerHeight * 0.95) el.classList.add("in");
     });
-  }, 1200);
+  }
+  if (reduce) {
+    $all("[data-reveal]").forEach(function (el) { el.classList.add("in"); });
+  } else {
+    if ("IntersectionObserver" in window) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
+      }, { threshold: 0, rootMargin: "0px 0px -8% 0px" });
+      $all("[data-reveal]").forEach(function (el) { io.observe(el); });
+    }
+    // Always-on failsafe so the reveal can never get stuck regardless of the observer.
+    window.addEventListener("scroll", revealInView, { passive: true });
+    window.addEventListener("resize", revealInView);
+    revealInView();
+    setTimeout(revealInView, 800);
+  }
 
   /* magnetic buttons */
   if (!reduce && window.matchMedia("(pointer:fine)").matches) {
