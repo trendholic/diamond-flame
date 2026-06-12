@@ -674,15 +674,19 @@
   // Several fetch sources, tried in order until one returns usable data.
   // `reader: true` sources return rendered markdown (great for bot-blocked sites).
   function importProxies(u) {
+    var enc = encodeURIComponent(u);
     var list = [];
-    if (DF.cfg && DF.cfg.IMPORT_PROXY) list.push({ url: DF.cfg.IMPORT_PROXY + encodeURIComponent(u) });
-    list.push({ url: "https://api.allorigins.win/raw?url=" + encodeURIComponent(u) });
-    list.push({ url: "https://api.allorigins.win/get?url=" + encodeURIComponent(u) });
-    list.push({ url: "https://corsproxy.io/?url=" + encodeURIComponent(u) });
-    list.push({ url: "https://api.codetabs.com/v1/proxy/?quest=" + encodeURIComponent(u) });
-    list.push({ url: "https://thingproxy.freeboard.io/fetch/" + u });
-    // Jina AI Reader renders the page server-side (bypasses most bot blocks).
+    // A self-hosted proxy (e.g. the included Cloudflare worker) is most reliable — used first if set.
+    if (DF.cfg && DF.cfg.IMPORT_PROXY) list.push({ url: DF.cfg.IMPORT_PROXY + enc });
+    // Jina AI Reader renders the page server-side and bypasses most bot walls,
+    // including "press & hold / confirm you're human" checks — most reliable, tried first.
     list.push({ url: "https://r.jina.ai/" + u, reader: true });
+    // HTML proxies (raw or JSON-wrapped) parsed for JSON-LD / Open Graph data.
+    list.push({ url: "https://www.whateverorigin.org/get?url=" + enc });
+    list.push({ url: "https://api.allorigins.win/raw?url=" + enc });
+    list.push({ url: "https://api.allorigins.win/get?url=" + enc });
+    list.push({ url: "https://cors.eu.org/" + u });
+    list.push({ url: "https://api.codetabs.com/v1/proxy/?quest=" + enc });
     return list;
   }
   // fetch text with an abort timeout so a dead source fails fast.
@@ -699,12 +703,18 @@
   function parseReader(text) {
     var out = {}, t = text || "";
     var mt = t.match(/^Title:\s*(.+)$/m); if (mt) out.name = mt[1].trim().slice(0, 120);
-    var mi = t.match(/!\[[^\]]*\]\((https?:\/\/[^)\s]+)\)/); if (mi) out.image = mi[1];
+    // Pick the first content image, skipping logos / icons / tracking pixels / nav banners.
+    var imgs = [], re = /!\[[^\]]*\]\((https?:\/\/[^)\s]+)\)/g, m;
+    while ((m = re.exec(t))) imgs.push(m[1]);
+    var junk = /(sprite|logo|icon|favicon|pixel|beacon|\/track|teads|analytics|doubleclick|\.svg(\?|$)|1x1|placeholder|spacer|loading|navigation|\/nav[\/_]|flag)/i;
+    for (var k = 0; k < imgs.length; k++) { if (!junk.test(imgs[k])) { out.image = imgs[k]; break; } }
+    if (!out.image && imgs.length) out.image = imgs[0];
     var mp = t.match(/(?:Rs\.?|PKR|₨|\$)\s?([\d,]{2,})(?:\.\d{1,2})?/i);
     if (mp) { var n = parseFloat(mp[1].replace(/,/g, "")); if (isFinite(n) && n > 0) out.price = n; }
     var body = t.split(/Markdown Content:/i).pop();
+    var boiler = /skip to main|accessibility|add to (cart|bag)|sign in|create account|we use cookies|cookie policy|all rights reserved|you don'?t have permission|enable javascript|breadcrumb|main content|navigation menu/i;
     var lines = body.split(/\n+/).map(function (s) { return s.trim(); })
-      .filter(function (s) { return s && "#!|>".indexOf(s.charAt(0)) === -1 && s.length > 40; });
+      .filter(function (s) { return s && "#!|>".indexOf(s.charAt(0)) === -1 && s.length > 50 && /[a-z]/.test(s) && s.indexOf(" ") > 0 && !boiler.test(s); });
     if (lines.length) out.description = lines[0].replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").slice(0, 400);
     return out;
   }
@@ -722,19 +732,27 @@
     if (/^\s*(oops|error|rate ?limit|forbidden|access denied|too many requests)/i.test(html)) return false;
     return true;
   }
-  // Detect bot-wall / "human verification" interstitials (PerimeterX "press & hold",
-  // Cloudflare, DataDome, Akamai, generic CAPTCHA). These pages ARE valid HTML, so
-  // without this guard the parser would import their title/text — e.g. the dreaded
-  // "Activate and hold the button to confirm that you're human" — as the product name.
+  // Page-level signal that a whole response is a bot-wall interstitial
+  // (PerimeterX "press & hold", Cloudflare, DataDome). NARROW on purpose — it must
+  // NOT fire just because a normal product page embeds a reCAPTCHA/captcha script,
+  // which is why the importer no longer rejects pages on this; it's used only to
+  // tailor the final "couldn't read it" message.
   function looksLikeChallenge(text) {
     if (!text) return false;
-    var t = String(text).slice(0, 8000);
-    return /press\s*&?\s*and?\s*hold|activate and hold|hold the button|confirm (that )?you(['’]?re| are)\s+(a\s+)?human|are you (a )?human|verify (that )?you are (a\s+)?human|i['’]?m not a robot|press\s*&\s*hold|perimeterx|px-captcha|_px\b|datadome|geo\.captcha|checking your browser|just a moment\.{0,3}<\/title>|attention required|cf-browser-verification|cf-chl|enable javascript and cookies|unusual traffic from your|please verify you are a human|recaptcha|hcaptcha|\bcaptcha\b/i.test(t);
+    var t = String(text).slice(0, 6000);
+    return /press\s*(&|and)\s*hold|activate and hold|hold the button to|confirm (that )?you(['’]?re| are)\s+(a\s+)?human|verify (that )?you are (a\s+)?human|i['’]?m not a robot|perimeterx|px-captcha|datadome|checking your browser before|just a moment\.{0,3}\s*<\/title>|attention required!?\s*\|?\s*cloudflare|cf-browser-verification|please verify you are a human|unusual traffic from your/i.test(t);
   }
-  // Drop any field that still carries challenge wording (defense in depth).
+  // Is a SHORT field value (name/description) actually an interstitial title rather
+  // than product text? Safe to apply to short fields — real appliance names never
+  // read "Just a moment" / "Access denied" / "press & hold".
+  function isChallengeName(s) {
+    s = String(s || "");
+    return /just a moment|attention required|access denied|forbidden|you have been blocked|press\s*(&|and)\s*hold|are you (a )?human|confirm you(['’]?re| are)\s+(a\s+)?human|verify you are (a\s+)?human|i['’]?m not a robot|robot check|security check|are you a robot|checking your browser|please enable (js|javascript|cookies)|ddos protection|too many requests/i.test(s);
+  }
+  // Drop any field that carries interstitial wording (defense in depth).
   function stripChallengeFields(d) {
-    if (d.name && looksLikeChallenge(d.name)) d.name = "";
-    if (d.description && looksLikeChallenge(d.description)) d.description = "";
+    if (d.name && isChallengeName(d.name)) d.name = "";
+    if (d.description && isChallengeName(d.description)) d.description = "";
     return d;
   }
 
@@ -769,23 +787,28 @@
       return got;
     }
 
+    var sawChallenge = false;
     function attempt(i) {
       if (i >= proxies.length) {
-        status.textContent = "Couldn't auto-read that page (the site may block bots). Try a different product link, or just fill the fields in below — it only takes a moment.";
+        status.textContent = sawChallenge
+          ? "That site guards its pages behind a human-verification wall, so it can't be auto-read. Paste a different product link, or fill the fields in below."
+          : "Couldn't auto-read that page. Paste a different product link, or just fill the fields in below — it only takes a moment.";
         return;
       }
       var px = proxies[i];
-      status.textContent = "Fetching…" + (i ? " (source " + (i + 1) + " of " + proxies.length + ")" : "");
-      fetchText(px.url, px.reader ? 20000 : 10000).then(function (text) {
-        if (looksLikeChallenge(text)) throw new Error("bot-challenge"); // skip human-verification walls
+      status.textContent = i === 0 ? "Reading the page…" : "Trying another source… (" + (i + 1) + "/" + proxies.length + ")";
+      // Parse first; only the SHORT result fields are sanitised against interstitial
+      // text. We never reject a page just because it mentions a captcha script.
+      fetchText(px.url, px.reader ? 18000 : 8000).then(function (text) {
         var d;
         if (px.reader) {
           d = parseReader(text);
         } else {
           var html = extractHtml(text);
-          if (!looksLikeHtml(html) || looksLikeChallenge(html)) throw new Error("blocked");
+          if (!looksLikeHtml(html)) throw new Error("blocked");
           d = parseProduct(html);
         }
+        if (looksLikeChallenge(text)) sawChallenge = true; // remembered only for the final message
         stripChallengeFields(d);
         if (!d.name && !d.image && !d.price) throw new Error("no data");
         var got = applyData(d);
