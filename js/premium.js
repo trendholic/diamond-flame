@@ -44,11 +44,22 @@
   if ("IntersectionObserver" in window && !reduce) {
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
-    }, { threshold: 0.12, rootMargin: "0px 0px -8% 0px" });
+      // threshold 0: reveal the moment any part enters — works for very tall
+      // single-column sections on mobile (12% of a tall grid can exceed the
+      // viewport, so the old 0.12 threshold never fired and products stayed hidden).
+    }, { threshold: 0, rootMargin: "0px 0px -8% 0px" });
     $all("[data-reveal]").forEach(function (el) { io.observe(el); });
   } else {
     $all("[data-reveal]").forEach(function (el) { el.classList.add("in"); });
   }
+  // Failsafe: if anything is still hidden shortly after load (observer missed,
+  // script hiccup), force it visible so content is never permanently invisible.
+  setTimeout(function () {
+    $all("[data-reveal]:not(.in)").forEach(function (el) {
+      var r = el.getBoundingClientRect();
+      if (r.top < window.innerHeight) el.classList.add("in");
+    });
+  }, 1200);
 
   /* magnetic buttons */
   if (!reduce && window.matchMedia("(pointer:fine)").matches) {

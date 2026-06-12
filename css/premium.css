@@ -369,7 +369,10 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:.88em}
   .footer-inner{grid-template-columns:1fr 1fr}
   .cta-inner{flex-direction:column;align-items:flex-start;padding:34px 26px}
   .hero{padding:54px 0 64px}
-  .hero-visual{display:none}
+  /* show the hero visual / branding slides on mobile too (match desktop);
+     hide only the floating spec chips so nothing overflows the screen */
+  .hero-visual{display:block;height:300px;max-width:420px;margin:8px auto 0}
+  .hero-spec{display:none}
 }
 @media(max-width:460px){.footer-inner{grid-template-columns:1fr}}
 

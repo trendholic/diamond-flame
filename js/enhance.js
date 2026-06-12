@@ -66,7 +66,7 @@
       entries.forEach(function (e) {
         if (e.isIntersecting) { e.target.classList.add("df-in"); gio.unobserve(e.target); }
       });
-    }, { threshold: 0.18, rootMargin: "0px 0px -6% 0px" });
+    }, { threshold: 0, rootMargin: "0px 0px -6% 0px" });
     grids.forEach(function (g) { gio.observe(g); });
   } else {
     grids.forEach(function (g) { g.classList.add("df-in"); });
