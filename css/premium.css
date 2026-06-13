@@ -642,7 +642,9 @@ body.coming-soon-on{overflow:hidden}
 /* responsive: comfortable on phones, refined on desktop */
 @media(max-width:560px){
   .modal-overlay{padding:14px;align-items:flex-start;padding-top:max(20px,env(safe-area-inset-top))}
-  .modal{padding:24px 20px;border-radius:20px;max-height:94vh}
+  /* viewport-based cap: max-width:100% is circular inside an auto grid track, so the
+     modal would overflow the screen — calc(100vw - padding) constrains it reliably */
+  .modal{width:auto;max-width:calc(100vw - 28px);padding:24px 20px;border-radius:20px;max-height:94vh}
   .auth-head{margin-bottom:18px}
   .auth-head h3{font-size:22px}
   .auth-sub{font-size:13.5px}
