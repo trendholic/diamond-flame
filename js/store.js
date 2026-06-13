@@ -140,20 +140,24 @@
       applySettings(map);
     });
   }
+  // Coming-soon gate: shown when the admin turns it on — but signed-in dealers and
+  // admins bypass it and shop normally (public-only "coming soon" / soft launch).
+  function comingSoonActive() { return String(lastSettings && lastSettings.coming_soon) === "1"; }
+  function gateBypass() { return !!(profile && (profile.role === "dealer" || profile.role === "admin")); }
+  function updateComingSoonGate() {
+    var cs = el("comingSoon");
+    if (!cs) return;
+    var show = comingSoonActive() && !gateBypass();
+    cs.hidden = !show;
+    document.body.classList.toggle("coming-soon-on", show);
+    if (show) { var yr = el("csYear"); if (yr) yr.textContent = new Date().getFullYear(); }
+  }
+
   function applySettings(s) {
     lastSettings = s || {};
-    // Coming-soon gate: when the admin turns it on, every visitor sees the gate
-    // instead of the store. Applied first (and from cached settings) so it shows
-    // immediately with no flash of the real site.
-    var cs = el("comingSoon");
-    if (cs) {
-      var csOn = String(s && s.coming_soon) === "1";
-      cs.hidden = !csOn;
-      document.body.classList.toggle("coming-soon-on", csOn);
-      if (csOn) {
-        var yr = el("csYear"); if (yr) yr.textContent = new Date().getFullYear();
-      }
-    }
+    // Applied first (and from cached settings) so the gate shows immediately for the
+    // public with no flash of the real site; lifts again once a dealer/admin signs in.
+    updateComingSoonGate();
     renderCollections(); // re-apply category-card images if products are already loaded
     // NOTE: the site ships with the official Diamond Flame emblem (img/logo.png)
     // wired into the header, opening screen, footer and favicon. We intentionally
@@ -776,6 +780,7 @@
   function refreshAuthUI() {
     DF.currentProfile().then(function (p) {
       profile = p;
+      updateComingSoonGate(); // dealers/admins bypass the coming-soon gate once known
       var btn = el("authBtn");
       if (p) {
         var label = (p.full_name || p.email || "Account").split(" ")[0];
@@ -1060,6 +1065,9 @@
     loadSettings();
     refreshAuthUI();
     compareInit();
+
+    var csLogin = el("csDealerLogin"); // sign-in link on the coming-soon gate
+    if (csLogin) csLogin.addEventListener("click", openAuth);
 
     el("search").addEventListener("input", function (e) { query = e.target.value; renderGrid(); });
     el("cartBtn").addEventListener("click", openCart);

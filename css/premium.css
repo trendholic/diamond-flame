@@ -594,7 +594,7 @@ body.cmp-active .float-cart{bottom:94px}
 
 /* ============ COMING SOON GATE ============ */
 body.coming-soon-on{overflow:hidden}
-.coming-soon{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:32px;text-align:center;
+.coming-soon{position:fixed;inset:0;z-index:9000;display:grid;place-items:center;padding:32px;text-align:center;
   color:#f4efe6;background:radial-gradient(1100px 760px at 50% 28%,#1d1810,#0c0a06);overflow:hidden}
 .cs-aura{position:absolute;inset:0;pointer-events:none;
   background:radial-gradient(620px 420px at 78% 12%,rgba(202,160,106,.18),transparent 60%),
@@ -612,3 +612,10 @@ body.coming-soon-on{overflow:hidden}
 .cs-wa:hover{transform:translateY(-2px);box-shadow:0 20px 46px rgba(168,115,56,.5)}
 .cs-foot{margin-top:42px;color:#8a8174;font-size:12.5px;letter-spacing:.04em}
 @media(max-width:560px){.cs-logo{width:72px}.cs-brand{font-size:22px}.cs-text{font-size:15.5px}}
+
+/* sign-in modal must sit above the coming-soon gate so dealers can log in through it */
+.modal-overlay{z-index:9500}
+.cs-login{margin-top:20px;background:none;border:none;color:#caa06a;font:inherit;font-size:13.5px;font-weight:600;
+  letter-spacing:.02em;cursor:pointer;padding:8px 10px;border-bottom:1px solid rgba(202,160,106,.45);border-radius:0;
+  transition:color .2s,border-color .2s}
+.cs-login:hover{color:#e7cda0;border-color:#e7cda0}
