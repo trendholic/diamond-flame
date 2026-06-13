@@ -142,6 +142,18 @@
   }
   function applySettings(s) {
     lastSettings = s || {};
+    // Coming-soon gate: when the admin turns it on, every visitor sees the gate
+    // instead of the store. Applied first (and from cached settings) so it shows
+    // immediately with no flash of the real site.
+    var cs = el("comingSoon");
+    if (cs) {
+      var csOn = String(s && s.coming_soon) === "1";
+      cs.hidden = !csOn;
+      document.body.classList.toggle("coming-soon-on", csOn);
+      if (csOn) {
+        var yr = el("csYear"); if (yr) yr.textContent = new Date().getFullYear();
+      }
+    }
     renderCollections(); // re-apply category-card images if products are already loaded
     // NOTE: the site ships with the official Diamond Flame emblem (img/logo.png)
     // wired into the header, opening screen, footer and favicon. We intentionally

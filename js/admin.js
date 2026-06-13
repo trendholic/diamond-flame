@@ -77,6 +77,34 @@
       if (!Array.isArray(heroSlides)) heroSlides = [];
       heroSlideFiles = [];
       renderBranding();
+      syncComingSoon();
+    });
+  }
+  /* ---------- coming-soon mode (instant on/off) ---------- */
+  function comingSoonOn() { return String(settingsMap.coming_soon) === "1"; }
+  function syncComingSoon() {
+    var tog = el("comingSoonToggle"); if (!tog) return;
+    tog.checked = comingSoonOn();
+    var st = el("comingSoonState");
+    if (st) {
+      st.textContent = tog.checked
+        ? "● Live: visitors currently see the Coming Soon page."
+        : "○ Off: the storefront is open to visitors.";
+      st.className = "cs-state" + (tog.checked ? " on" : "");
+    }
+  }
+  function setComingSoon(on) {
+    var tog = el("comingSoonToggle"); if (tog) tog.disabled = true;
+    db.from("settings").upsert([{ key: "coming_soon", value: on ? "1" : "0" }]).then(function (res) {
+      if (tog) tog.disabled = false;
+      if (res.error) {
+        DF.toast(res.error.message, "warn");
+        if (tog) tog.checked = comingSoonOn(); // revert UI on failure
+        return;
+      }
+      settingsMap.coming_soon = on ? "1" : "0";
+      syncComingSoon();
+      DF.toast(on ? "Coming Soon page is now LIVE for visitors." : "Storefront is now open to visitors.");
     });
   }
   function heroSlidesField() {
@@ -1116,6 +1144,7 @@
     el("productForm").elements["images_files"].addEventListener("change", renderGallery);
     el("importBtn").addEventListener("click", importFromUrl);
     el("saveBranding").addEventListener("click", saveBranding);
+    el("comingSoonToggle").addEventListener("change", function () { setComingSoon(this.checked); });
     el("pricingDealer").addEventListener("change", loadDealerPricing);
     el("savePricing").addEventListener("click", savePricing);
 

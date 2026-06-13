@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400..560&family=Sora:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <script>document.documentElement.className += " js df-anim";</script>
-  <link rel="stylesheet" href="css/premium.css?v=6" />
+  <link rel="stylesheet" href="css/premium.css?v=7" />
   <link rel="stylesheet" href="css/enhance.css?v=2" />
   <link rel="stylesheet" href="css/couture.css?v=6" />
   <script type="application/ld+json">
@@ -44,6 +44,20 @@
     </div>
   </div>
   <div class="df-progress" id="dfProgress" aria-hidden="true"></div>
+
+  <!-- COMING SOON gate (shown only when the admin enables it in the dashboard) -->
+  <div class="coming-soon" id="comingSoon" hidden>
+    <div class="cs-aura" aria-hidden="true"></div>
+    <div class="cs-inner">
+      <img class="cs-logo" src="img/logo.png" alt="Diamond Flame" />
+      <div class="cs-brand">Diamond&nbsp;Flame</div>
+      <span class="cs-pill">Premium Home Appliances</span>
+      <h1 class="cs-title">Something exceptional<br />is on the way.</h1>
+      <p class="cs-text">Our new home for premium kitchen &amp; home appliances is almost ready. Please check back soon — it’ll be worth the wait.</p>
+      <a class="cs-wa" href="https://wa.me/923030042020" target="_blank" rel="noopener">Chat with us on WhatsApp</a>
+      <div class="cs-foot">© <span id="csYear"></span> Diamond Flame · Gujranwala, Pakistan</div>
+    </div>
+  </div>
 
   <div class="announce">
     <div class="announce-viewport">
@@ -384,7 +398,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="js/config.js" defer></script>
   <script src="js/core.js" defer></script>
-  <script src="js/store.js?v=6" defer></script>
+  <script src="js/store.js?v=7" defer></script>
   <script src="js/premium.js?v=4" defer></script>
   <script src="js/enhance.js?v=4" defer></script>
   <script src="js/reviews.js?v=3" defer></script>
