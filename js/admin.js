@@ -24,6 +24,10 @@
     var d = new Date(s);
     return d.toLocaleDateString("en-PK", { year: "numeric", month: "short", day: "numeric" });
   }
+  function payMethodLabel(m) {
+    return m === "bank_transfer" ? "Full bank transfer"
+      : m === "advance_50" ? "50% advance · 50% on dispatch" : "Cash on Delivery";
+  }
 
   /* ---------- gate ---------- */
   function boot() {
@@ -325,7 +329,7 @@
     var paid = o.payment_status === "paid";
     var right = "<div>Invoice #: <strong>" + esc(o.ref || o.id) + "</strong></div>" +
       "<div>Date: " + esc(fmtDate(o.created_at)) + "</div>" +
-      "<div>Payment: " + (o.payment_method === "bank_transfer" ? "Bank Transfer" : "Cash on Delivery") + "</div>" +
+      "<div>Payment: " + payMethodLabel(o.payment_method) + "</div>" +
       '<div>Status: <span class="badge ' + (paid ? "b-paid" : "b-unpaid") + '">' + esc(o.payment_status || "unpaid") + "</span></div>";
     var inner = docHeader("INVOICE", right) +
       '<div class="parties"><div class="party"><h3>Billed to</h3>' +
@@ -339,7 +343,7 @@
       '<table class="tbl"><thead><tr><th>Item</th><th class="right">Qty</th><th class="right">Unit</th><th class="right">Amount</th></tr></thead><tbody>' +
         (items || '<tr><td colspan="4">No items</td></tr>') + "</tbody></table>" +
       '<div class="totals"><div class="row grand"><span>Total</span><span>' + pkr(o.total) + "</span></div></div>";
-    if (o.payment_method === "bank_transfer" && DF.cfg && DF.cfg.BANK) {
+    if ((o.payment_method === "bank_transfer" || o.payment_method === "advance_50") && DF.cfg && DF.cfg.BANK) {
       var b = DF.cfg.BANK;
       inner += '<div class="note"><strong>Bank transfer details:</strong> ' + esc(b.bank) + " · " + esc(b.title) +
         " · " + esc(b.account) + " · IBAN " + esc(b.iban) + (o.payment_ref ? " · Ref: " + esc(o.payment_ref) : "") + "</div>";
@@ -355,7 +359,7 @@
     var body = rows.map(function (o) {
       var amt = Number(o.total || 0); billed += amt; if (o.payment_status === "paid") paid += amt;
       return "<tr><td>" + esc(fmtDate(o.created_at)) + "</td><td>" + esc(o.ref || o.id) + "</td><td>" +
-        esc(o.business || o.customer_name || "") + "</td><td>" + (o.payment_method === "bank_transfer" ? "Bank" : "COD") +
+        esc(o.business || o.customer_name || "") + "</td><td>" + (o.payment_method === "bank_transfer" ? "Bank" : o.payment_method === "advance_50" ? "50/50" : "COD") +
         '</td><td class="right">' + pkr(amt) + '</td><td><span class="badge ' + (o.payment_status === "paid" ? "b-paid" : "b-unpaid") +
         '">' + esc(o.payment_status || "unpaid") + "</span></td></tr>";
     }).join("");
@@ -422,7 +426,8 @@
       var payOpts = PAYSTATUS.map(function (s) {
         return '<option value="' + s + '"' + (s === (o.payment_status || "unpaid") ? " selected" : "") + ">" + s + "</option>";
       }).join("");
-      var methodLabel = o.payment_method === "bank_transfer" ? "🏦 Bank transfer" : "💵 Cash on delivery";
+      var methodLabel = o.payment_method === "bank_transfer" ? "🏦 Full bank transfer"
+        : o.payment_method === "advance_50" ? "🤝 50% advance · 50% on dispatch" : "💵 Cash on delivery";
       var proof = o.payment_proof_url
         ? '<a class="thumb-link" href="' + esc(o.payment_proof_url) + '" data-full="' + esc(o.payment_proof_url) + '" title="Receipt"><img src="' + esc(o.payment_proof_url) + '" alt="receipt" loading="lazy" /></a>'
         : "";

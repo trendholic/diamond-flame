@@ -703,17 +703,32 @@
       if (f.email && profile.email) f.email.value = profile.email;
       if (f.phone && profile.phone) f.phone.value = profile.phone;
     }
-    // payment: render bank details, default to Cash on Delivery
+    // payment: render bank details; default to the 50% advance plan
     var b = (DF.cfg && DF.cfg.BANK) || {};
     el("bankDetails").innerHTML =
       bankRow("Bank", b.bank) + bankRow("Account title", b.title) +
       bankRow("Account #", b.account) + bankRow("IBAN", b.iban);
-    el("orderForm").elements["payment_method"].value = "cod";
-    el("bankBox").hidden = true;
+    el("orderForm").elements["payment_method"].value = "advance_50";
+    updatePaymentUI();
     el("checkoutOverlay").classList.add("open");
   }
   function bankRow(k, v) {
     return v ? '<div class="bank-row"><span>' + esc(k) + "</span><strong>" + esc(v) + "</strong></div>" : "";
+  }
+  // Both methods need an upfront transfer + receipt; show the split for the 50% plan.
+  function updatePaymentUI() {
+    var method = el("orderForm").elements["payment_method"].value;
+    el("bankBox").hidden = false;
+    var split = el("paySplit"), t = cartTotal();
+    if (method === "advance_50") {
+      var now = Math.round(t / 2);
+      split.innerHTML =
+        '<div class="ps-row"><span>Pay now — 50% advance</span><strong>' + pkr(now) + "</strong></div>" +
+        '<div class="ps-row ps-later"><span>On dispatch day — remaining 50%</span><strong>' + pkr(t - now) + "</strong></div>";
+    } else {
+      split.innerHTML = '<div class="ps-row"><span>Pay now — full amount</span><strong>' + pkr(t) + "</strong></div>";
+    }
+    split.hidden = false;
   }
 
   function uploadPaymentProof(file) {
@@ -756,7 +771,14 @@
     });
     L.push("");
     L.push("💰 *Total:* " + pkr(order.total));
-    L.push("💳 *Payment:* " + (method === "bank_transfer" ? "Bank Transfer" : "Cash on Delivery"));
+    if (method === "advance_50") {
+      var adv = Math.round(order.total / 2);
+      L.push("💳 *Payment:* 50% advance + 50% on dispatch");
+      L.push("   • Advance paid (50%): " + pkr(adv));
+      L.push("   • Due on dispatch (50%): " + pkr(order.total - adv));
+    } else {
+      L.push("💳 *Payment:* Full bank transfer");
+    }
     if (order.payment_ref) L.push("🔖 Ref: " + order.payment_ref);
     if (order.payment_proof_url) L.push("🧾 Receipt: " + order.payment_proof_url);
     var url = "https://wa.me/" + num + "?text=" + encodeURIComponent(L.join("\n"));
@@ -788,9 +810,11 @@
       };
     });
     var method = f.payment_method.value;
-    // Bank transfer: the payment receipt is mandatory.
-    if (method === "bank_transfer" && !f.payment_proof.files[0]) {
-      DF.toast("Please upload your payment receipt to place a bank-transfer order.", "warn");
+    // Both methods need an upfront transfer — the receipt is mandatory.
+    if (!f.payment_proof.files[0]) {
+      DF.toast(method === "advance_50"
+        ? "Please upload the receipt for your 50% advance to place the order."
+        : "Please upload your payment receipt to place the order.", "warn");
       el("bankBox").hidden = false;
       return;
     }
@@ -807,12 +831,12 @@
       status: "pending",
       payment_method: method,
       payment_status: "unpaid",
-      payment_ref: method === "bank_transfer" ? f.payment_ref.value.trim() : null
+      payment_ref: f.payment_ref.value.trim() || null
     };
     var submitBtn = f.querySelector('button[type="submit"]');
     submitBtn.disabled = true; submitBtn.textContent = "Placing order…";
 
-    var proofFile = method === "bank_transfer" ? f.payment_proof.files[0] : null;
+    var proofFile = f.payment_proof.files[0] || null;
     var proofStep = proofFile
       ? (function () { submitBtn.textContent = "Uploading receipt…"; return uploadPaymentProof(proofFile); })()
       : Promise.resolve(null);
@@ -825,9 +849,9 @@
       submitBtn.disabled = false; submitBtn.textContent = "Place order";
       if (res.error) { DF.toast("Order failed: " + res.error.message, "warn"); return; }
       cart = {}; saveCart(); updateCartUI();
-      el("doneMsg").textContent = method === "bank_transfer"
-        ? "Thank you. Order " + order.ref + " is logged — tap below to send the details & receipt to our team on WhatsApp."
-        : "Thank you. Order " + order.ref + " is logged — tap below to send the details to our team on WhatsApp.";
+      el("doneMsg").textContent = method === "advance_50"
+        ? "Thank you. Order " + order.ref + " is logged — your 50% advance is noted and the remaining 50% is due on dispatch day. Tap below to send the details & receipt to our team on WhatsApp."
+        : "Thank you. Order " + order.ref + " is logged — tap below to send the details & receipt to our team on WhatsApp.";
       el("checkoutForm").hidden = true;
       el("checkoutDone").hidden = false;
       sendOrderToWhatsApp(order, items, method);
@@ -1142,9 +1166,7 @@
     el("doneClose").addEventListener("click", closeCheckout);
     el("orderForm").addEventListener("submit", submitOrder);
     Array.prototype.forEach.call(el("orderForm").elements["payment_method"], function (r) {
-      r.addEventListener("change", function () {
-        el("bankBox").hidden = el("orderForm").elements["payment_method"].value !== "bank_transfer";
-      });
+      r.addEventListener("change", updatePaymentUI);
     });
 
     var ctaJoin = el("ctaJoin");

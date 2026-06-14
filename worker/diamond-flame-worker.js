@@ -85,7 +85,14 @@ function formatOrder(o) {
   });
   L.push("");
   if (o.total != null) L.push("💰 Total: Rs " + clip(o.total, 20));
-  L.push("💳 " + (o.payment_method === "bank_transfer" ? "Bank Transfer" : "Cash on Delivery"));
+  if (o.payment_method === "advance_50") {
+    var adv = Math.round(Number(o.total || 0) / 2);
+    L.push("💳 50% advance + 50% on dispatch");
+    L.push("• Advance (50%): Rs " + adv);
+    L.push("• Due on dispatch (50%): Rs " + (Number(o.total || 0) - adv));
+  } else {
+    L.push("💳 " + (o.payment_method === "bank_transfer" ? "Bank Transfer" : "Cash on Delivery"));
+  }
   if (o.payment_ref) L.push("🔖 Ref: " + clip(o.payment_ref, 60));
   if (o.payment_proof_url) L.push("🧾 Receipt: " + clip(o.payment_proof_url, 300));
   return L.join("\n");

@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400..560&family=Sora:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <script>document.documentElement.className += " js df-anim";</script>
-  <link rel="stylesheet" href="css/premium.css?v=11" />
+  <link rel="stylesheet" href="css/premium.css?v=12" />
   <link rel="stylesheet" href="css/enhance.css?v=2" />
   <link rel="stylesheet" href="css/couture.css?v=6" />
   <script type="application/ld+json">
@@ -361,13 +361,14 @@
 
           <div class="pay-label">Payment method</div>
           <div class="pay-methods">
-            <label class="pay-opt"><input type="radio" name="payment_method" value="cod" checked /> <span><strong>Cash on Delivery</strong><small>Pay when your order arrives</small></span></label>
-            <label class="pay-opt"><input type="radio" name="payment_method" value="bank_transfer" /> <span><strong>Bank Transfer</strong><small>Pay in advance &amp; upload your receipt</small></span></label>
+            <label class="pay-opt"><input type="radio" name="payment_method" value="advance_50" checked /> <span><strong>50% advance · 50% on dispatch</strong><small>Pay half now to confirm, half on dispatch day</small></span></label>
+            <label class="pay-opt"><input type="radio" name="payment_method" value="bank_transfer" /> <span><strong>Full bank transfer</strong><small>Pay in full now &amp; upload your receipt</small></span></label>
           </div>
           <div class="bank-box" id="bankBox" hidden>
+            <div class="pay-split" id="paySplit" hidden></div>
             <div class="bank-details" id="bankDetails"></div>
             <label>Transaction reference <small>(optional)</small><input name="payment_ref" /></label>
-            <label>Upload receipt <small>(required for bank transfer)</small><input name="payment_proof" type="file" accept="image/*" class="file" /></label>
+            <label>Upload payment receipt <small>(required)</small><input name="payment_proof" type="file" accept="image/*" class="file" /></label>
           </div>
 
           <div class="order-summary" id="orderSummary"></div>
@@ -401,7 +402,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="js/config.js" defer></script>
   <script src="js/core.js" defer></script>
-  <script src="js/store.js?v=12" defer></script>
+  <script src="js/store.js?v=13" defer></script>
   <script src="js/premium.js?v=4" defer></script>
   <script src="js/enhance.js?v=4" defer></script>
   <script src="js/reviews.js?v=4" defer></script>

@@ -332,6 +332,11 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:.88em}
 .bank-row{display:flex;justify-content:space-between;font-size:13.5px}
 .bank-row span{color:var(--muted)}
 .bank-row strong{color:var(--ink);font-weight:600}
+.pay-split{display:grid;gap:8px;background:#fff;border:1px solid var(--silver);border-radius:10px;padding:12px 14px}
+.ps-row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:14px}
+.ps-row span{color:var(--ink)}
+.ps-row strong{font-family:'Sora',sans-serif;font-weight:700;color:var(--accent-ink)}
+.ps-row.ps-later span,.ps-row.ps-later strong{color:var(--muted);font-weight:600}
 .done{text-align:center;padding:14px 0}
 .done-mark{display:inline-grid;place-items:center;width:62px;height:62px;border-radius:50%;font-size:30px;background:rgba(31,157,107,.12);color:#1f9d6b;margin-bottom:14px}
 .done p{color:var(--muted);margin:8px 0 22px}
