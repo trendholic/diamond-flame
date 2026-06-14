@@ -762,7 +762,18 @@
     var url = "https://wa.me/" + num + "?text=" + encodeURIComponent(L.join("\n"));
     var link = el("waOrderLink");
     if (link) { link.href = url; link.hidden = false; }
-    try { window.open(url, "_blank"); } catch (e) {} // best-effort auto-open; button is the reliable path
+    // Server-side auto-send (keeps the WhatsApp key off the public site). When the
+    // worker endpoint is configured, the order reaches admin WhatsApp automatically.
+    if (DF.cfg && DF.cfg.ORDER_WEBHOOK) {
+      try {
+        fetch(DF.cfg.ORDER_WEBHOOK, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(order), keepalive: true
+        }).catch(function () {});
+      } catch (e) {}
+    } else {
+      try { window.open(url, "_blank"); } catch (e) {} // no server yet → best-effort open the prefilled chat
+    }
   }
 
   function submitOrder(e) {

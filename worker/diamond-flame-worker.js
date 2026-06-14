@@ -21,6 +21,7 @@ export default {
     try {
       if (url.pathname === "/proxy") return handleProxy(url, cors);
       if (url.pathname === "/chat" && request.method === "POST") return handleChat(request, env, cors);
+      if (url.pathname === "/notify-order" && request.method === "POST") return handleNotifyOrder(request, env, cors);
       if (url.pathname === "/") return json({ ok: true, service: "diamond-flame-worker" }, 200, cors);
       return json({ error: "Not found" }, 404, cors);
     } catch (e) {
@@ -41,6 +42,67 @@ function json(obj, status, cors) {
     status: status || 200,
     headers: Object.assign({ "Content-Type": "application/json" }, cors)
   });
+}
+
+/* ---------- /notify-order : send a placed order to the store's WhatsApp ----------
+ * Accepts either a direct order object (POSTed by the storefront) or a Supabase
+ * database-webhook payload ({ record: {...} }). Sends via the official WhatsApp
+ * Cloud API when WA_TOKEN + WA_PHONE_ID are set, otherwise via CallMeBot
+ * (CALLMEBOT_APIKEY). The destination number is ADMIN_WHATSAPP (no +).
+ * The WhatsApp credential never leaves the server. */
+async function handleNotifyOrder(request, env, cors) {
+  var num = (env && (env.ADMIN_WHATSAPP || env.WHATSAPP)) || "";
+  if (!num) return json({ ok: false, error: "ADMIN_WHATSAPP not set" }, 200, cors);
+  var body;
+  try { body = await request.json(); } catch (e) { return json({ ok: false, error: "bad json" }, 400, cors); }
+  var o = body && body.record ? body.record : body;        // unwrap Supabase webhook payload
+  if (!o || !o.ref) return json({ ok: false, error: "missing order" }, 400, cors);
+
+  var text = formatOrder(o);
+  try {
+    if (env.WA_TOKEN && env.WA_PHONE_ID) await sendCloudApi(env, num, text);
+    else if (env.CALLMEBOT_APIKEY) await sendCallMeBot(num, text, env.CALLMEBOT_APIKEY);
+    else return json({ ok: false, error: "no whatsapp sender configured" }, 200, cors);
+  } catch (e) {
+    return json({ ok: false, error: String(e && e.message || e) }, 200, cors);
+  }
+  return json({ ok: true }, 200, cors);
+}
+function clip(s, n) { return String(s == null ? "" : s).slice(0, n); }
+function formatOrder(o) {
+  var L = [];
+  L.push("🧾 NEW ORDER — " + clip(o.ref, 40));
+  L.push("");
+  L.push("👤 " + clip(o.customer_name, 80) + (o.business ? " · " + clip(o.business, 80) : ""));
+  L.push("📞 " + clip(o.phone, 40));
+  if (o.email) L.push("✉️ " + clip(o.email, 80));
+  if (o.address) L.push("📍 " + clip(o.address, 300));
+  L.push("");
+  L.push("🛒 Items");
+  var items = Array.isArray(o.items) ? o.items : [];
+  items.slice(0, 40).forEach(function (it) {
+    L.push("• " + clip(it.qty, 6) + "x " + clip(it.name, 80) + (it.variant ? " (" + clip(it.variant, 40) + ")" : ""));
+  });
+  L.push("");
+  if (o.total != null) L.push("💰 Total: Rs " + clip(o.total, 20));
+  L.push("💳 " + (o.payment_method === "bank_transfer" ? "Bank Transfer" : "Cash on Delivery"));
+  if (o.payment_ref) L.push("🔖 Ref: " + clip(o.payment_ref, 60));
+  if (o.payment_proof_url) L.push("🧾 Receipt: " + clip(o.payment_proof_url, 300));
+  return L.join("\n");
+}
+async function sendCallMeBot(phone, text, apikey) {
+  var u = "https://api.callmebot.com/whatsapp.php?phone=" + encodeURIComponent(phone) +
+    "&text=" + encodeURIComponent(text) + "&apikey=" + encodeURIComponent(apikey);
+  var r = await fetch(u);
+  if (!r.ok) throw new Error("callmebot " + r.status);
+}
+async function sendCloudApi(env, phone, text) {
+  var r = await fetch("https://graph.facebook.com/v20.0/" + env.WA_PHONE_ID + "/messages", {
+    method: "POST",
+    headers: { "Authorization": "Bearer " + env.WA_TOKEN, "Content-Type": "application/json" },
+    body: JSON.stringify({ messaging_product: "whatsapp", to: phone, type: "text", text: { body: text } })
+  });
+  if (!r.ok) throw new Error("cloud " + r.status + " " + (await r.text()).slice(0, 200));
 }
 
 /* ---------- /proxy : fetch a remote page and return it with CORS ---------- */

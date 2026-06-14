@@ -14,6 +14,11 @@ window.DF_CONFIG = {
   // Optional custom CORS proxy for "Import from URL" (must return the raw page
   // and accept the target URL appended/encoded). Leave "" to use built-in fallbacks.
   IMPORT_PROXY: "",
+  // Optional worker endpoint that auto-sends each placed order to the store's
+  // WhatsApp (keeps the WhatsApp key server-side). Set to your deployed worker URL
+  // + "/notify-order", e.g. "https://diamond-flame-worker.<you>.workers.dev/notify-order".
+  // Leave "" to fall back to the one-tap "Send on WhatsApp" button.
+  ORDER_WEBHOOK: "",
   // Bank details shown to customers who choose "Bank Transfer" — edit these.
   BANK: {
     bank: "Meezan Bank",
