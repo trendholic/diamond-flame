@@ -554,6 +554,7 @@
       f["brand"].value = p.brand || "";
       f["category"].value = p.category || "";
       f["description"].value = p.description || "";
+      f["warranty"].value = p.warranty || "";
       f["retail_price"].value = p.retail_price;
       f["wholesale_price"].value = p.wholesale_price;
       f["cost_price"].value = p.cost_price != null ? p.cost_price : 0;
@@ -872,6 +873,7 @@
         brand: f["brand"].value.trim(),
         category: f["category"].value.trim(),
         description: f["description"].value.trim(),
+        warranty: f["warranty"].value.trim() || null,
         image_url: images[0] || null,
         images: images,
         retail_price: Number(f["retail_price"].value),

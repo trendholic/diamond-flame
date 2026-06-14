@@ -48,6 +48,7 @@ create table if not exists public.products (
   image_url       text,
   images          jsonb not null default '[]'::jsonb,
   variants        jsonb not null default '[]'::jsonb,
+  warranty        text,                          -- optional, per-product (admin-set)
   active          boolean not null default true,
   created_at      timestamptz not null default now()
 );
@@ -61,6 +62,7 @@ alter table public.products add column if not exists cost_price      numeric not
 alter table public.products add column if not exists image_url       text;
 alter table public.products add column if not exists images          jsonb not null default '[]'::jsonb;
 alter table public.products add column if not exists variants        jsonb not null default '[]'::jsonb;
+alter table public.products add column if not exists warranty        text;
 alter table public.products add column if not exists moq             integer not null default 1;
 alter table public.products add column if not exists stock           integer not null default 0;
 alter table public.products add column if not exists emoji           text default '📦';
@@ -143,7 +145,7 @@ returns table (
   id uuid, name text, brand text, category text, description text,
   emoji text, image_url text, images jsonb, moq integer, stock integer,
   retail_price numeric, wholesale_price numeric, cost_price numeric,
-  variants jsonb
+  variants jsonb, warranty text
 )
 language sql stable security definer set search_path = public
 as $$
@@ -162,7 +164,8 @@ as $$
                 select jsonb_agg(jsonb_build_object(
                   'name', v->>'name', 'retail_price', v->'retail_price', 'stock', v->'stock'))
                 from jsonb_array_elements(coalesce(p.variants, '[]'::jsonb)) v), '[]'::jsonb)
-         end
+         end,
+         p.warranty
   from   public.products p
   where  p.active = true
   order  by p.category, p.name;

@@ -477,6 +477,7 @@
       ["Options", vs.length ? vs.map(function (v) { return v.name; }).join(", ") : "Single option"],
       ["Minimum order (dealers)", String(p.moq)]
     ];
+    if (p.warranty) rows.push(["Warranty", p.warranty]); // only when the admin set one
     return '<table class="pd-spectable">' + rows.map(function (r) {
       return "<tr><th>" + esc(r[0]) + "</th><td>" + esc(r[1] == null ? "—" : r[1]) + "</td></tr>";
     }).join("") + "</table>";
@@ -549,7 +550,8 @@
               '<span id="pdQty">' + detailQty + '</span><button type="button" id="pdInc" aria-label="Increase">+</button></div>' +
             '<button class="btn btn-primary" id="pdAdd">Add to order</button>' +
           "</div>" +
-          '<div class="pd-assure"><span>🚚 48h dispatch</span><span>✅ 100% genuine</span><span>🔒 Secure order</span></div>' +
+          '<div class="pd-assure"><span>🚚 48h dispatch</span><span>✅ 100% genuine</span>' +
+            (p.warranty ? '<span>🛡️ ' + esc(p.warranty) + "</span>" : "<span>🔒 Secure order</span>") + "</div>" +
         "</div>" +
       "</div>" +
       '<div class="pd-sections">' +
@@ -1033,7 +1035,10 @@
       row("Brand", ps.map(function (p) { return esc(p.brand || "—"); })) +
       row("Availability", ps.map(availabilityHtml)) +
       row("Options", ps.map(function (p) { var vs = variantsOf(p); return vs.length ? esc(vs.map(function (v) { return v.name; }).join(", ")) : "Single option"; })) +
-      row("Min order (dealers)", ps.map(function (p) { return esc(String(p.moq || 1)); }));
+      row("Min order (dealers)", ps.map(function (p) { return esc(String(p.moq || 1)); })) +
+      (ps.some(function (p) { return p.warranty; })
+        ? row("Warranty", ps.map(function (p) { return p.warranty ? esc(p.warranty) : "—"; }))
+        : "");
     el("cmpBody").innerHTML = '<div class="cmp-table-wrap"><table class="cmp-table"><thead>' + head + "</thead><tbody>" + body + "</tbody></table></div>";
     var modal = document.getElementById("cmpModal");
     Array.prototype.forEach.call(modal.querySelectorAll(".cmp-col-x"), function (b) {
