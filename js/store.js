@@ -782,21 +782,32 @@
     }
     if (order.payment_ref) L.push("🔖 Ref: " + order.payment_ref);
     if (order.payment_proof_url) L.push("🧾 Receipt: " + order.payment_proof_url);
-    var url = "https://wa.me/" + num + "?text=" + encodeURIComponent(L.join("\n"));
+    var msg = L.join("\n");
+    var url = "https://wa.me/" + num + "?text=" + encodeURIComponent(msg);
     var link = el("waOrderLink");
     if (link) { link.href = url; link.hidden = false; }
-    // Server-side auto-send (keeps the WhatsApp key off the public site). When the
-    // worker endpoint is configured, the order reaches admin WhatsApp automatically.
+    var sent = false;
+    // 1) Self-hosted worker (keeps the key server-side) — preferred when deployed.
     if (DF.cfg && DF.cfg.ORDER_WEBHOOK) {
       try {
         fetch(DF.cfg.ORDER_WEBHOOK, {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify(order), keepalive: true
         }).catch(function () {});
+        sent = true;
       } catch (e) {}
-    } else {
-      try { window.open(url, "_blank"); } catch (e) {} // no server yet → best-effort open the prefilled chat
     }
+    // 2) No-server path: fire a CallMeBot GET straight from the browser (an <img>
+    //    request isn't CORS-blocked), so orders auto-send with just an API key.
+    if (!sent && DF.cfg && DF.cfg.CALLMEBOT_APIKEY) {
+      try {
+        new Image().src = "https://api.callmebot.com/whatsapp.php?phone=" + encodeURIComponent(num) +
+          "&text=" + encodeURIComponent(msg) + "&apikey=" + encodeURIComponent(DF.cfg.CALLMEBOT_APIKEY);
+        sent = true;
+      } catch (e) {}
+    }
+    // 3) Nothing configured yet → open the prefilled chat (the one-tap button is shown too).
+    if (!sent) { try { window.open(url, "_blank"); } catch (e) {} }
   }
 
   function submitOrder(e) {

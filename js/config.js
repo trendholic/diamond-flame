@@ -19,6 +19,10 @@ window.DF_CONFIG = {
   // + "/notify-order", e.g. "https://diamond-flame-worker.<you>.workers.dev/notify-order".
   // Leave "" to fall back to the one-tap "Send on WhatsApp" button.
   ORDER_WEBHOOK: "",
+  // No-server alternative: paste your CallMeBot API key here and every order is
+  // sent to your WhatsApp (the WHATSAPP number above) automatically — no worker
+  // needed. Get the key + current activation number at callmebot.com/whatsapp-api.
+  CALLMEBOT_APIKEY: "",
   // Bank details shown to customers who choose "Bank Transfer" — edit these.
   BANK: {
     bank: "Meezan Bank",
