@@ -48,13 +48,13 @@
   function respond(text) {
     var t = text.toLowerCase().trim();
     if (/^(hi|hey|hello|salam|asalam|assalam|aoa|good (morning|evening|afternoon))/.test(t))
-      return { html: "Hi! 👋 I'm the Diamond Flame assistant. Ask me about <b>ACs, refrigerators, washing machines, TVs</b> and more — or about delivery, payment and warranty.", chips: DEFAULT_CHIPS };
+      return { html: "Hi! 👋 I'm the Diamond Flame assistant. Ask me about <b>ACs, refrigerators, washing machines, TVs</b> and more — or about delivery and payment.", chips: DEFAULT_CHIPS };
     if (/deliver|ship|dispatch|courier/.test(t))
       return { html: "🚚 We offer <b>insured nationwide delivery within 48 hours</b> of order confirmation, across Pakistan.", chips: DEFAULT_CHIPS };
     if (/pay|cod|cash|bank|transfer|installment/.test(t))
       return { html: "💳 Pay by <b>Cash on Delivery</b> or <b>Bank Transfer</b> (upload your receipt at checkout). Approved dealers can request credit terms.", chips: DEFAULT_CHIPS };
     if (/warrant|guarantee|return/.test(t))
-      return { html: "🛡️ Every appliance comes with the <b>official manufacturer warranty</b>. Keep your invoice for any claim.", chips: DEFAULT_CHIPS };
+      return { html: "✅ Every appliance is <b>100% genuine and sealed</b>. Keep your invoice, and our support team will help with any product issue.", chips: DEFAULT_CHIPS };
     if (/install|fit|setup|set up/.test(t))
       return { html: "🛠️ We offer setup guidance and can arrange professional installation for ACs, geysers and large appliances on request.", chips: DEFAULT_CHIPS };
     if (/dealer|wholesale|trade|bulk/.test(t))

@@ -76,6 +76,7 @@
       renderCompareBar();
       updateCartUI();
       updateDealerHint();
+      broadcastRole();     // tell the reviews carousel whether to show dealer or customer reviews
       handleRoute(); // open detail if the URL points at a product
     });
   }
@@ -144,6 +145,12 @@
   // admins bypass it and shop normally (public-only "coming soon" / soft launch).
   function comingSoonActive() { return String(lastSettings && lastSettings.coming_soon) === "1"; }
   function gateBypass() { return !!(profile && (profile.role === "dealer" || profile.role === "admin")); }
+  // Publish whether the viewer is trade (dealer/admin) so other modules — e.g. the
+  // reviews carousel — can show shop/dealer reviews vs. regular customer reviews.
+  function broadcastRole() {
+    DF.isDealer = gateBypass() || isDealerView();
+    try { document.dispatchEvent(new CustomEvent("df:role", { detail: { dealer: DF.isDealer } })); } catch (e) {}
+  }
   function updateComingSoonGate() {
     var cs = el("comingSoon");
     if (!cs) return;
@@ -468,8 +475,7 @@
       ["Category", p.category],
       ["Brand", p.brand || "—"],
       ["Options", vs.length ? vs.map(function (v) { return v.name; }).join(", ") : "Single option"],
-      ["Minimum order (dealers)", String(p.moq)],
-      ["Warranty", "Official manufacturer warranty"]
+      ["Minimum order (dealers)", String(p.moq)]
     ];
     return '<table class="pd-spectable">' + rows.map(function (r) {
       return "<tr><th>" + esc(r[0]) + "</th><td>" + esc(r[1] == null ? "—" : r[1]) + "</td></tr>";
@@ -483,12 +489,20 @@
       "</div>";
   }
   function reviewsHtml() {
-    var data = [
+    // Dealers see trade/shop reviews; regular customers see consumer reviews.
+    var consumer = [
       ["AK", "Ayesha K. · Lahore", "Genuine, sealed unit and delivered next day. Works flawlessly."],
-      ["MR", "Mizan R. · Gujranwala", "Great wholesale pricing and insured delivery. Highly recommended."],
-      ["SF", "Sana F. · Islamabad", "Best price with full warranty, and the support team is responsive."]
+      ["HM", "Hina M. · Faisalabad", "Beautifully finished and so easy to clean. Looks premium in my kitchen."],
+      ["UT", "Usman T. · Rawalpindi", "Solid build and safe to use around the kids. Exceeded my expectations."]
     ];
-    return '<h3 class="pd-rev-title">Customer reviews</h3><div class="pd-rev-grid">' + data.map(function (d) {
+    var dealer = [
+      ["IY", "Yousaf Electronics · Sargodha", "Wholesale pricing is unbeatable and stock is always genuine and sealed. Smooth reorders."],
+      ["MR", "Rauf Appliances · Gujranwala", "Bulk orders arrive perfectly sealed with insured delivery — my margins are excellent."],
+      ["DK", "Khan Traders · Rawalpindi", "Reliable stock and dealer pricing made them my go-to supplier. Genuine units every time."]
+    ];
+    var data = (DF.isDealer ? dealer : consumer);
+    var title = DF.isDealer ? "What shops &amp; dealers say" : "Customer reviews";
+    return '<h3 class="pd-rev-title">' + title + '</h3><div class="pd-rev-grid">' + data.map(function (d) {
       return '<figure class="review-card glass-card"><div class="stars">★★★★★</div><blockquote>“' +
         esc(d[2]) + '”</blockquote><figcaption><span class="avatar">' + esc(d[0]) + "</span> " + esc(d[1]) + "</figcaption></figure>";
     }).join("") + "</div>";
@@ -535,12 +549,12 @@
               '<span id="pdQty">' + detailQty + '</span><button type="button" id="pdInc" aria-label="Increase">+</button></div>' +
             '<button class="btn btn-primary" id="pdAdd">Add to order</button>' +
           "</div>" +
-          '<div class="pd-assure"><span>🚚 48h dispatch</span><span>🛡️ 10-yr warranty</span><span>🔒 Secure order</span></div>' +
+          '<div class="pd-assure"><span>🚚 48h dispatch</span><span>✅ 100% genuine</span><span>🔒 Secure order</span></div>' +
         "</div>" +
       "</div>" +
       '<div class="pd-sections">' +
         detailsBlock("Specifications", specsHtml(p), true) +
-        detailsBlock("Warranty &amp; care", "<p>Backed by the official manufacturer warranty against defects. Keep your invoice for warranty claims; follow the brand's user manual for care and cleaning.</p>") +
+        detailsBlock("Care &amp; use", "<p>Keep your invoice for your records and follow the user manual for care and cleaning to keep your appliance performing at its best.</p>") +
         detailsBlock("Installation &amp; delivery", "<p>Nationwide insured delivery, most orders within 48 hours. Professional installation for ACs, geysers and large appliances can be arranged on request.</p>") +
         detailsBlock("FAQ", faqHtml()) +
       "</div>" +
@@ -781,6 +795,7 @@
     DF.currentProfile().then(function (p) {
       profile = p;
       updateComingSoonGate(); // dealers/admins bypass the coming-soon gate once known
+      broadcastRole();        // refresh dealer-vs-customer reviews when the role is known
       var btn = el("authBtn");
       if (p) {
         var label = (p.full_name || p.email || "Account").split(" ")[0];
@@ -1018,8 +1033,7 @@
       row("Brand", ps.map(function (p) { return esc(p.brand || "—"); })) +
       row("Availability", ps.map(availabilityHtml)) +
       row("Options", ps.map(function (p) { var vs = variantsOf(p); return vs.length ? esc(vs.map(function (v) { return v.name; }).join(", ")) : "Single option"; })) +
-      row("Min order (dealers)", ps.map(function (p) { return esc(String(p.moq || 1)); })) +
-      row("Warranty", ps.map(function () { return "Official manufacturer warranty"; }));
+      row("Min order (dealers)", ps.map(function (p) { return esc(String(p.moq || 1)); }));
     el("cmpBody").innerHTML = '<div class="cmp-table-wrap"><table class="cmp-table"><thead>' + head + "</thead><tbody>" + body + "</tbody></table></div>";
     var modal = document.getElementById("cmpModal");
     Array.prototype.forEach.call(modal.querySelectorAll(".cmp-col-x"), function (b) {
