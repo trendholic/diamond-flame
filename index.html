@@ -367,7 +367,7 @@
           <div class="bank-box" id="bankBox" hidden>
             <div class="bank-details" id="bankDetails"></div>
             <label>Transaction reference <small>(optional)</small><input name="payment_ref" /></label>
-            <label>Upload receipt <small>(optional)</small><input name="payment_proof" type="file" accept="image/*" class="file" /></label>
+            <label>Upload receipt <small>(required for bank transfer)</small><input name="payment_proof" type="file" accept="image/*" class="file" /></label>
           </div>
 
           <div class="order-summary" id="orderSummary"></div>
@@ -379,7 +379,8 @@
         <span class="done-mark">✓</span>
         <h3>Order received</h3>
         <p id="doneMsg"></p>
-        <button class="btn btn-primary" id="doneClose">Done</button>
+        <a class="btn btn-primary full" id="waOrderLink" target="_blank" rel="noopener" href="#" hidden>📲 Send order details on WhatsApp</a>
+        <button class="btn btn-ghost full" id="doneClose">Done</button>
       </div>
     </div>
   </div>
@@ -400,7 +401,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="js/config.js" defer></script>
   <script src="js/core.js" defer></script>
-  <script src="js/store.js?v=10" defer></script>
+  <script src="js/store.js?v=11" defer></script>
   <script src="js/premium.js?v=4" defer></script>
   <script src="js/enhance.js?v=4" defer></script>
   <script src="js/reviews.js?v=4" defer></script>

@@ -738,6 +738,33 @@
     el("orderSummary").innerHTML = html;
   }
 
+  // Build a pre-filled WhatsApp message (order details + receipt link) to the
+  // store's number and open it, so the placed order reaches admin on WhatsApp.
+  function sendOrderToWhatsApp(order, items, method) {
+    var num = (DF.cfg && DF.cfg.WHATSAPP) || "923030042020";
+    var L = [];
+    L.push("🧾 *NEW ORDER* — " + order.ref);
+    L.push("");
+    L.push("👤 " + order.customer_name + (order.business ? " · " + order.business : ""));
+    L.push("📞 " + order.phone);
+    if (order.email) L.push("✉️ " + order.email);
+    L.push("📍 " + order.address);
+    L.push("");
+    L.push("🛒 *Items*");
+    items.forEach(function (it) {
+      L.push("• " + it.qty + "× " + it.name + (it.variant ? " (" + it.variant + ")" : "") + " — " + pkr(it.price * it.qty));
+    });
+    L.push("");
+    L.push("💰 *Total:* " + pkr(order.total));
+    L.push("💳 *Payment:* " + (method === "bank_transfer" ? "Bank Transfer" : "Cash on Delivery"));
+    if (order.payment_ref) L.push("🔖 Ref: " + order.payment_ref);
+    if (order.payment_proof_url) L.push("🧾 Receipt: " + order.payment_proof_url);
+    var url = "https://wa.me/" + num + "?text=" + encodeURIComponent(L.join("\n"));
+    var link = el("waOrderLink");
+    if (link) { link.href = url; link.hidden = false; }
+    try { window.open(url, "_blank"); } catch (e) {} // best-effort auto-open; button is the reliable path
+  }
+
   function submitOrder(e) {
     e.preventDefault();
     var f = e.target;
@@ -750,6 +777,12 @@
       };
     });
     var method = f.payment_method.value;
+    // Bank transfer: the payment receipt is mandatory.
+    if (method === "bank_transfer" && !f.payment_proof.files[0]) {
+      DF.toast("Please upload your payment receipt to place a bank-transfer order.", "warn");
+      el("bankBox").hidden = false;
+      return;
+    }
     var order = {
       ref: "DF-" + Date.now().toString(36).toUpperCase(),
       user_id: profile ? profile.id : null,
@@ -782,10 +815,11 @@
       if (res.error) { DF.toast("Order failed: " + res.error.message, "warn"); return; }
       cart = {}; saveCart(); updateCartUI();
       el("doneMsg").textContent = method === "bank_transfer"
-        ? "Thank you. Order " + order.ref + " is logged — we'll confirm once your transfer is verified."
-        : "Thank you. Order " + order.ref + " is logged — our team will call " + order.phone + " to confirm stock and delivery.";
+        ? "Thank you. Order " + order.ref + " is logged — tap below to send the details & receipt to our team on WhatsApp."
+        : "Thank you. Order " + order.ref + " is logged — tap below to send the details to our team on WhatsApp.";
       el("checkoutForm").hidden = true;
       el("checkoutDone").hidden = false;
+      sendOrderToWhatsApp(order, items, method);
     }).catch(function (err) {
       submitBtn.disabled = false; submitBtn.textContent = "Place order";
       DF.toast("Order failed: " + (err && err.message ? err.message : err), "warn");
