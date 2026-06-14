@@ -22,8 +22,9 @@ window.DF_CONFIG = {
   // Bank details shown to customers who choose "Bank Transfer" — edit these.
   BANK: {
     bank: "Meezan Bank",
-    title: "Diamond Flame",
-    account: "0000 1234 5678 9012",
-    iban: "PK00 MEZN 0000 1234 5678 9012"
+    title: "NADEEM IMPEX",
+    account: "09090102610361",
+    iban: "PK61MEZN0009090102610361",
+    currency: "PKR"
   }
 };

@@ -707,7 +707,8 @@
     var b = (DF.cfg && DF.cfg.BANK) || {};
     el("bankDetails").innerHTML =
       bankRow("Bank", b.bank) + bankRow("Account title", b.title) +
-      bankRow("Account #", b.account) + bankRow("IBAN", b.iban);
+      bankRow("Account #", b.account) + bankRow("IBAN", b.iban) +
+      bankRow("Currency", b.currency);
     el("orderForm").elements["payment_method"].value = "advance_50";
     updatePaymentUI();
     el("checkoutOverlay").classList.add("open");
